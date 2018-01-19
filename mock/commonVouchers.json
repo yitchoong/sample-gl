@@ -1,0 +1,3 @@
+[
+    {"id":1, "description":"Pay salary", "debit": "Salary expense", "credit": "Bank"}
+]

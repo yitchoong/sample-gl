@@ -11,7 +11,7 @@ const webpack = require('webpack');
 // in the next major version of loader-utils.'
 process.noDeprecation = true;
 
-module.exports = (options) => ({
+module.exports = (options) => { return ({
   entry: options.entry,
   output: Object.assign({ // Compile into js/build.js
     path: path.resolve(process.cwd(), 'build'),
@@ -20,8 +20,10 @@ module.exports = (options) => ({
   module: {
     rules: [
       {
-        test: /\.js$/, // Transform all .js files required somewhere with Babel
+        // test: /\.js$/, // Transform all .js files required somewhere with Babel
+        test: /\.(js|jsx)$/,
         exclude: /node_modules/,
+        // include: /node_modules\/react-bootstrap-sidebar/,
         use: {
           loader: 'babel-loader',
           options: options.babelQuery,
@@ -114,4 +116,4 @@ module.exports = (options) => ({
   devtool: options.devtool,
   target: 'web', // Make web variables accessible to webpack, e.g. window
   performance: options.performance || {},
-});
+}); }
