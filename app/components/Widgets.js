@@ -1,10 +1,17 @@
 import React, {Component } from 'react';
 import PropTypes from 'prop-types';
+import styled from 'styled-components';
 
 import _ from 'lodash';
 import t from 'tcomb-form';
 import classnames from 'classnames'
 import SegmentedControl from './SegmentedControl'
+
+import Icon from 'react-icons-kit';
+import { ic_clear } from 'react-icons-kit/md/ic_clear';
+
+const SizedIcon = props => <Icon size={props.size || 30} icon={props.icon} style={{margin:"5px"}} />;
+
 
 const Form = t.form.Form
 const Nil = t.Nil
@@ -95,6 +102,7 @@ export class Decimal extends Textbox {
       return numberTransformer;
     }
 }
+
 export class Select extends t.form.Select {
     getTemplate() {
         let self = this;
@@ -221,4 +229,83 @@ export class List extends t.form.List {
         });
         return template;
     }
+}
+
+export class SimpleList extends t.form.List {
+    getTemplate() {
+        let self = this;
+        const template = t.form.Form.templates.list.clone({
+            renderFieldset: (children, locals) => {
+                const legend = null; // locals.label ? <legend>{locals.label}</legend> : null
+                const props = {
+                  className: getClassName(locals),
+                  disabled: locals.disabled
+                }
+                return React.createElement.apply(null, [
+                  'div',
+                  props,
+                  legend
+                ].concat(children))
+            },
+            renderRow : (row, locals) => {
+                return (
+                  <div className="row">
+                    {getCol({sm: 10, xs: 10}, row.input)}
+                    {getCol({sm: 1, xs: 1}, template.renderButtonGroup(row.buttons, locals))} 
+                  </div>
+                )
+            },
+            renderButtonGroup: (buttons) => {
+              const renderBtn = (button) => {
+                  return button.type === 'remove' ? <span key={button.type} onClick={button.click}><SizedIcon icon={ic_clear} /></span> : null
+
+                //   return <button key={button.type} style={{top:'10px'}} type="button" className={`btn btn-info btn-${button.type}`} onClick={button.click}>{button.label}</button>
+              }
+              return <div className="btn-group">{buttons.map(renderBtn)}</div>
+            },
+            renderAddButton: (locals) => {
+                const button = locals.add
+                const handler = self.props.options.addItemHandler ? () => self.props.options.addItemHandler(button) : button.click
+                const label = self.props.options.addText ? self.props.options.addText : button.label ;
+                return (
+                  <div className="row">
+                    <div className="col-sm-12 col-xs-12">
+                      <div style={{marginBottom: '15px', marginTop:'10px'}}>
+                        <button type="button" className={`btn btn-info btn-block btn-${button.type}`} onClick={handler}>{label}</button>
+                      </div>
+                    </div>
+                  </div>
+                )
+            }
+        });
+        return template;
+    }
+}
+export class CheckBox extends t.form.Checkbox {
+  getTemplate() {
+      let self = this;
+      const template = t.form.Form.templates.checkbox.clone({
+
+        renderCheckbox: (locals) => {
+          const attrs = template.getAttrs(locals)
+          const className = {
+            checkbox: true,
+            disabled: attrs.disabled
+          }
+          let style = attrs.style || {}
+          style.width = '25px'
+          style.height = '25px'
+          style.bottom = '5px'
+          attrs.style = style
+          return (
+            <div className={classnames(className)}>
+              <label htmlFor={attrs.id}>
+                <input {...attrs} /> {self.props.options.hasLabel === false ?  "" : locals.label}
+              </label>
+            </div>
+          )
+        }
+      });
+      return template;
+  }
 }

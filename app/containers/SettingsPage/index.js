@@ -60,17 +60,23 @@ export class SettingsPage extends React.PureComponent { // eslint-disable-line r
   constructor(props){
     super(props)
     this.handleTabSelect = this.handleTabSelect.bind(this)
-    this.state = {tabKey: 1}    
+    let loc = props.history.location.pathname
+    let tab = loc.match('\/company\/?') ? 1:
+              loc.match('\/segment\/?') ? 2:
+              loc.match('\/currency\/?') ? 3:
+              loc.match('\/glperiod\/?') ? 4: 1
+
+    this.state = {tabKey: tab}    
   }
   handleTabSelect(key) {
-    console.log("Selected tab with key: ", key)
-    this.setState({tabKey:key})
+    // console.log("Selected tab with key: ", key)
     let tab = key === 1 ? 'company' : 
               key === 2 ? 'segment' :
               key === 3 ? 'currency' :
               key === 4 ? 'glperiod' : ''
     const url = tab ? `/settings/${tab}/` : '/settings/'
     this.props.history.push(url)
+    this.setState({tabKey:key})
   }
   render() {
     const {match} = this.props;
