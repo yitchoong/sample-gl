@@ -35,21 +35,21 @@ const GlPeriodNo = styled.span`
   margin-right:20px;
 `
 const GlPeriodStart = styled.span`
-  flex: 3;
+  flex: 4;
   margin-right:20px;
 
 `
 const GlPeriodStartLabel = styled.span`
-  flex: 2.8;
+  flex: 3.8;
   margin-right:0px;
 `
 
 const GlPeriodEnd = styled.span`
-  flex: 3;
+  flex:4;
   margin-right:20px;
 `
 const GlPeriodEndLabel = styled.span`
-  flex: 3;
+  flex: 4;
   margin-right:20px;
 `
 
@@ -148,10 +148,10 @@ const optionsFac = (self) => {
       i18n : { optional : '', required : ' *', add: __('Add'), remove: __('Remove') },
       fields: {
           glPeriodList: {
-            factory: w.SimpleList, 
+            factory: w.SimpleList,
             disableAdd: false,
-            addItemHandler: (button) => { console.log("Add button clicked"); return button.click()},            
-            addText: __("New GL Period"), 
+            addItemHandler: (button) => { console.log("Add button clicked"); return button.click()},
+            addText: __("New GL Period"),
             item : glPeriodOptions() },
       }
   }
@@ -204,7 +204,7 @@ const formTemplate = (self) => {
 export default class SegmentTab extends React.Component {
   constructor(props) {
       super(props);
-      this.state = {value: {glPeriodList: []} , 
+      this.state = {value: {glPeriodList: []} ,
         filter: {company: '', year: formatDate(new Date(), 'YYYY') } };
       this.onFormChange = this.onFormChange.bind(this)
       this.onFilterChange = this.onFilterChange.bind(this)
@@ -214,7 +214,7 @@ export default class SegmentTab extends React.Component {
   }
   onFormChange(raw,path){
       console.log("onFormChange", path, "raw", raw);
-    
+
       this.setState({value:raw});
   }
   render() {
@@ -223,7 +223,7 @@ export default class SegmentTab extends React.Component {
           <div>
             <Form ref="cform" type={filterFac(this)} options={filterOpts} value={this.state.filter}
               onChange={this.onFilterChange} />
-            <Form type={modelFac(this)} options={optionsFac(this)} 
+            <Form type={modelFac(this)} options={optionsFac(this)}
                   value={this.state.value} onChange={this.onFormChange} />
           </div>
       )

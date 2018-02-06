@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import NormalImg from 'components/Img';
 
-import Logo from './logo.png';
+//import Logo from './logo.png';
 import messages from './messages';
 import {withRouter} from 'react-router-dom';
 
@@ -16,7 +16,7 @@ class Header extends React.Component { // eslint-disable-line react/prefer-state
       <div>
         <Wrapper>
           <TitleLeft>
-            <Image src={Logo} alt="Logo"></Image>
+            {/*<Image src={Logo} alt="Logo"></Image>*/}
           </TitleLeft>
           <TitleMid>GL Application</TitleMid>
           <TitleRight>{this.context.userName}</TitleRight>
