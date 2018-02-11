@@ -59,9 +59,9 @@ const optionsFac = (self) => {
       i18n : { optional : '', required : ' *', add: __('Add'), remove: __('Remove') },
       fields: {
           currencyList: {
-            factory: w.SimpleList, 
-            addItemHandler: (button) => { console.log("Add button clicked"); return button.click()},            
-            addText: __("New Currency"), 
+            factory: w.SimpleList,
+            addItemHandler: (button) => { console.log("Add button clicked"); return button.click()},
+            addText: __("New Currency"),
             item : currencyOptions() },
       }
   }
@@ -104,16 +104,18 @@ const formTemplate = (self) => {
 export default class CurrencyTab extends React.Component {
   constructor(props) {
       super(props);
-      this.state = {value: {currencyList: [] } };
+      // this.state = {value: {currencyList: [] } };
       this.onFormChange = this.onFormChange.bind(this)
   }
-  onFormChange(raw,path){
-      this.setState({value:raw});
+  onFormChange(raw,path) {
+      // this.setState({value:raw});
+      this.props.actions.settingsCcySet(raw)
   }
   render() {
+      const {currencies} = this.props;
       return (
-          <Form type={modelFac(this)} options={optionsFac(this)} 
-                value={this.state.value} onChange={this.onFormChange} />
+          <Form type={modelFac(this)} options={optionsFac(this)}
+                value={currencies.toJS()} onChange={this.onFormChange} />
       )
   }
 }

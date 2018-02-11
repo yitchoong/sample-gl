@@ -9,8 +9,7 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { Helmet } from 'react-helmet';
 import { createStructuredSelector } from 'reselect';
-import { compose } from 'redux';
-
+import { compose, bindActionCreators } from 'redux';
 import { Switch, Route } from 'react-router-dom';
 
 import styled from 'styled-components';
@@ -28,10 +27,13 @@ import makeSelectSettingsPage from './selectors';
 import reducer from './reducer';
 import saga from './saga';
 
+
 import Company from './CompanySettings'
 import Currency from './CurrencySettings'
 import Segment from './SegmentSettings'
 import GlPeriod from './GlPeriodSettings'
+import * as settingActions from './actions'
+import {companies, segments, currencies, glPeriods, uiData} from './selectors'
 
 const MainContainer = styled.div`
     flex: 1;
@@ -66,20 +68,26 @@ export class SettingsPage extends React.PureComponent { // eslint-disable-line r
               loc.match('\/currency\/?') ? 3:
               loc.match('\/glperiod\/?') ? 4: 1
 
-    this.state = {tabKey: tab}    
+    this.state = {tabKey: tab}
   }
+
   handleTabSelect(key) {
-    // console.log("Selected tab with key: ", key)
-    let tab = key === 1 ? 'company' : 
+    let tab = key === 1 ? 'company' :
               key === 2 ? 'segment' :
               key === 3 ? 'currency' :
               key === 4 ? 'glperiod' : ''
     const url = tab ? `/settings/${tab}/` : '/settings/'
-    this.props.history.push(url)
-    this.setState({tabKey:key})
+    // validate if tab is ok  before we change?
+    const activeKey = this.refs.nav.props.activeKey
+    let canChange = activeKey === 1 && !this.compform.getValue() ? false : true
+    if (canChange && key !== activeKey) {
+      this.props.history.push(url)
+      this.setState({tabKey:key})
+    }
   }
   render() {
-    const {match} = this.props;
+    const {match, actions, companies,segments,currencies,glPeriods,uiData} = this.props;
+    const extraProps = {match,actions,companies,segments,currencies,glPeriods,uiData}
     return (
       <div>
         <Helmet>
@@ -89,8 +97,8 @@ export class SettingsPage extends React.PureComponent { // eslint-disable-line r
 
         <div>
             <TabContainer>
-                <div style={{flex:8}}>                
-                  <Nav bsStyle="pills" activeKey={this.state.tabKey} onSelect={this.handleTabSelect} id="settingsTab">
+                <div style={{flex:8}}>
+                  <Nav ref="nav" bsStyle="pills" activeKey={this.state.tabKey} onSelect={this.handleTabSelect} id="settingsTab">
                       <NavItem eventKey={1} > {"Companies"} </NavItem>
                       <NavItem eventKey={2} > {"Segments"} </NavItem>
                       <NavItem eventKey={3} > {"Currencies"} </NavItem>
@@ -98,16 +106,17 @@ export class SettingsPage extends React.PureComponent { // eslint-disable-line r
                     </Nav>
                 </div>
                 <div style={{flex:1}}>
-                      <Button onClick={()=>alert('Clicked')}>Click</Button>
-                </div>        
+                      <Button bsStyle={"info"} onClick={()=>alert('Clicked')}>Save Settings</Button>
+                </div>
             </TabContainer>
             <TabContent>
                 <Switch>
-                  <Route exact path={`${match.path}/`}  component={Company} />
-                  <Route  path={`${match.path}/company/`}  component={Company} />
-                  <Route  path={`${match.path}/segment/`}  component={Segment} />
-                  <Route  path={`${match.path}/currency/`} component={Currency} />
-                  <Route  path={`${match.path}/glperiod/`} component={GlPeriod} />
+                  {/*<Route exact path={`${match.path}/`}  component={Company} /> */}
+                  <Route exact path={`${match.path}/`}  render={(props) => (<Company inputRef={f=>this.compform=f} {...props} {...extraProps}  />)} />
+                  <Route  path={`${match.path}/company/`}  render={(props) => (<Company inputRef={f=>this.compform=f} {...props} {...extraProps} />)} />
+                  <Route  path={`${match.path}/segment/`}  render={(props) => (<Segment {...props} {...extraProps} />)} />
+                  <Route  path={`${match.path}/currency/`} render={(props) => (<Currency {...props} {...extraProps} />)} />
+                  <Route  path={`${match.path}/glperiod/`} render={(props) => (<GlPeriod {...props} {...extraProps} />)} />
                 </Switch>
               </TabContent>
 
@@ -121,20 +130,37 @@ SettingsPage.propTypes = {
   dispatch: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = createStructuredSelector({
-  settingspage: makeSelectSettingsPage(),
-});
+// const mapStateToProps = createStructuredSelector({
+//   settingspage: makeSelectSettingsPage(),
+// });
+
+// function mapDispatchToProps(dispatch) {
+//   return {
+//     dispatch,
+//   };
+// }
+
+const mapStateToProps = (state,props) => {
+  return {
+    companies: companies(state),
+    segments: segments(state),
+    currencies: currencies(state),
+    glPeriods: glPeriods(state),
+    uiData: uiData(state)
+  }
+}
 
 function mapDispatchToProps(dispatch) {
   return {
     dispatch,
-  };
-}
+    actions: bindActionCreators(settingActions, dispatch)
+   };
+
+};
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps);
-
-const withReducer = injectReducer({ key: 'settingsPage', reducer });
-const withSaga = injectSaga({ key: 'settingsPage', saga });
+const withReducer = injectReducer({ key: 'settings', reducer });
+const withSaga = injectSaga({ key: 'settings', saga });
 
 export default compose(
   withReducer,

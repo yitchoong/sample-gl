@@ -2,17 +2,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import H2 from 'components/H2'
+import _ from 'lodash'
+import {fromJS} from 'immutable'
 
 import formatDate from 'date-fns/format'
 import parse from 'date-fns/parse'
 import isValid from 'date-fns/is_valid'
-
+import getYear from 'date-fns/get_year'
+import endOfMonth from 'date-fns/end_of_month'
 
 import t from 'tcomb-form';
 import * as w from 'components/Widgets'
 
 const __ = (code) => code
-
 
 const Container = styled.div`
   margin: 5px;
@@ -35,22 +37,21 @@ const GlPeriodNo = styled.span`
   margin-right:20px;
 `
 const GlPeriodStart = styled.span`
-  flex: 4;
+  flex: 5;
   margin-right:20px;
-
 `
 const GlPeriodStartLabel = styled.span`
-  flex: 3.8;
+  flex: 5;
   margin-right:0px;
 `
 
 const GlPeriodEnd = styled.span`
-  flex:4;
+  flex:5;
   margin-right:20px;
 `
 const GlPeriodEndLabel = styled.span`
-  flex: 4;
-  margin-right:20px;
+  flex: 6;
+  margin-right:0px;
 `
 
 const GlPeriodOpen = styled.span`
@@ -58,13 +59,12 @@ const GlPeriodOpen = styled.span`
   margin-right: 20px;
 `
 const GlPeriodOpenText = styled.span`
-  flex: 3;
+  flex: 3.6;
 `
 
 const LastColumn = styled.span`
   width: 30px;
 `
-
 const Row = styled.div`
   margin: 2px;
   border: solid 1px #EFF;
@@ -81,13 +81,17 @@ const FilterYear = styled.span`
 
 
 const Form = t.form.Form
-
 const Positive = t.refinement(t.Number, (n) => n >= 0);
 
 const filterFac = (self) => {
-  const validCompanies = {'1': 'Acme PL',  '2': 'Lebih Good'};
+  let compMap = {}
+  const companies = self.props.companies
+  if (companies && companies.get("companyList") && companies.get("companyList").size > 0 ) {
+    self.props.companies.get("companyList").forEach(co => compMap[co.get("companyNo")] = co.get("companyName"))
+  }
+
   return  t.struct({
-    company: t.enums(validCompanies),
+    company: t.enums(compMap),
     year: t.maybe(Positive)
   });
 }
@@ -117,9 +121,9 @@ const filterTemplate = (self) => {
   };
 }
 
-
 const modelFac = (self) => {
   const Period = t.struct({
+      companyNo: t.maybe(t.String),
       periodNo: Positive,
       periodOpen: t.maybe(t.Boolean),
       periodStart: t.Date,
@@ -135,6 +139,7 @@ const optionsFac = (self) => {
       return {
           template: glPeriodTemplate(self),
           fields: {
+              companyNo: {factory: w.Textbox, type:'hidden', hasLabel:false },
               periodNo: {factory: w.Decimal, hasLabel:false, dp:0 },
               periodOpen: {factory: w.CheckBox, hasLabel:false},
               periodStart: {factory: w.Datetime, hasLabel:false, order: ['D','M','YY']},
@@ -149,7 +154,8 @@ const optionsFac = (self) => {
       fields: {
           glPeriodList: {
             factory: w.SimpleList,
-            disableAdd: false,
+            disableAdd: true,
+            disableRemove: true,
             addItemHandler: (button) => { console.log("Add button clicked"); return button.click()},
             addText: __("New GL Period"),
             item : glPeriodOptions() },
@@ -172,7 +178,8 @@ const glPeriodTemplate = (self) => {
             <GlPeriodEnd>
               {inputs.periodEnd}
             </GlPeriodEnd>
-            <span style={{width:'50px'}}>&nbsp;</span>
+
+            <span style={{width:'60px'}}>&nbsp;</span>
             <GlPeriodOpen>
               {inputs.periodOpen}
             </GlPeriodOpen>
@@ -191,7 +198,7 @@ const formTemplate = (self) => {
               <GlPeriodNo>{"Period#"}</GlPeriodNo>
               <GlPeriodStartLabel>{"Start Date"}</GlPeriodStartLabel>
               <GlPeriodEndLabel>{"End Date"}</GlPeriodEndLabel>
-              <GlPeriodOpenText>&nbsp;&nbsp;&nbsp;&nbsp;{"Open?"}</GlPeriodOpenText>
+              <GlPeriodOpenText>&nbsp;{"Open?"}</GlPeriodOpenText>
               <LastColumn />
             </GlPeriodRow>
               {inputs.glPeriodList}
@@ -201,30 +208,58 @@ const formTemplate = (self) => {
   }
 }
 
-export default class SegmentTab extends React.Component {
+export default class GlPeriodTab extends React.Component {
   constructor(props) {
       super(props);
-      this.state = {value: {glPeriodList: []} ,
-        filter: {company: '', year: formatDate(new Date(), 'YYYY') } };
+      // this.state = {value: {glPeriodList: []} ,
+      //   filter: {company: '', year: formatDate(new Date(), 'YYYY') } };
       this.onFormChange = this.onFormChange.bind(this)
-      this.onFilterChange = this.onFilterChange.bind(this)
+      this.onFilterChange = _.debounce(this.onFilterChange.bind(this),100)
   }
   onFilterChange(raw,path) {
-    console.log("OnFilterChange", "path", path, "raw", raw )
+    const {company, year} = raw;
+    const {glPeriods} = this.props;
+    let yy,mm,dd, start, end;
+    let periods, prds;
+    if (company && year && year.length > 3) {
+      periods = glPeriods.filter(p => getYear(p.get("periodStart")) === parseInt(year) && p.get("companyNo") === company )
+      if (periods.size > 0) {
+        prds = periods // periods already exist
+      } else {
+        // no periods -- so initialize
+        yy = parseInt(year)
+        let dates = [0,1,2,3,4,5,6,7,8,9,10,11].map(m => {
+            let sd = new Date(yy,m,1)
+            return [sd, endOfMonth(sd)]
+        })
+        dates.push([dates[11][0], dates[11][1]]) // for period 13
+        let rows = dates.map( (item,idx) => {
+          return {companyNo: company, periodNo: idx+1, periodOpen:false, periodStart:item[0], periodEnd:item[1]}
+        })
+        prds= fromJS({glPeriodList: rows})
+      }
+    } else {
+      prds = fromJS({glPeriodList:[]}) // empty until both comp & year specified
+    }
+    let uiData = this.props.uiData.toJS()
+    uiData.filter = raw
+    this.props.actions.settingsUiDataSet(uiData)
+    this.props.actions.settingsPrdSet(prds)
+
   }
   onFormChange(raw,path){
-      console.log("onFormChange", path, "raw", raw);
-
-      this.setState({value:raw});
+      // console.log("onFormChange", path, "raw", raw);
+      this.props.actions.settingsPrdSet(raw)
   }
   render() {
-      console.log("State filter", this.state.filter)
+      const glPeriods = this.props.glPeriods.toJS();
+      const filter = this.props.uiData.get("filter").toJS()
       return (
           <div>
-            <Form ref="cform" type={filterFac(this)} options={filterOpts} value={this.state.filter}
-              onChange={this.onFilterChange} />
+            <Form ref="cform" type={filterFac(this)} options={filterOpts}
+            value={filter} onChange={this.onFilterChange} />
             <Form type={modelFac(this)} options={optionsFac(this)}
-                  value={this.state.value} onChange={this.onFormChange} />
+                  value={glPeriods} onChange={this.onFormChange} />
           </div>
       )
   }

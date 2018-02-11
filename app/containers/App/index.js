@@ -59,8 +59,8 @@ class Application extends Component { // eslint-disable-line react/prefer-statel
 
   getChildContext() {
     return {
-      userName: this.state.userName || "Demo" , 
-      setUsername : this.setUsername 
+      userName: this.state.userName || "Demo" ,
+      setUsername : this.setUsername
     }
   }
   setUsername(userName) {
@@ -89,7 +89,7 @@ class Application extends Component { // eslint-disable-line react/prefer-statel
         </BodyWrapper>
       </AppWrapper>
     );
-  
+
   }
 }
 Application.childContextTypes = {

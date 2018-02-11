@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import H2 from 'components/H2'
+import _ from 'lodash'
 
 import t from 'tcomb-form';
 import * as w from 'components/Widgets'
@@ -19,13 +20,11 @@ const CompanyPane = styled.div`
   border: solid 1px #FFF;
 `;
 
-
 const CompanyRow = styled.div`
   margin: 2px;
   border: solid 1px #FFF;
   display: flex;
   flex-direction: row;
-
 `
 const CompanyNo = styled.span`
   flex: 3;
@@ -38,14 +37,17 @@ const Abbreviation = styled.span`
 const CompanyName = styled.span`
   flex: 6;
 `
-
-
+const ErrorMsg = styled.div`
+  color: red;
+`
 
 const Form = t.form.Form
 
+const ShortField = t.refinement(t.String, (s) => s.length <= 3);
+
 const modelFac = (self) => {
   const Company = t.struct({
-      companyNo: t.Number,
+      companyNo: ShortField,
       abbreviation: t.maybe(t.String),
       companyName: t.String,
   })
@@ -59,9 +61,9 @@ const optionsFac = (self) => {
       return {
           template: companyTemplate(self),
           fields: {
-              companyNo: {factory: w.Decimal, hasLabel:false},
+              companyNo: {factory: w.Textbox, hasLabel:false, error:'Must be < 4 chars'},
               abbreviation: {factory: w.Textbox, hasLabel:false},
-              companyName: {factory: w.Textbox, hasLabel:false}
+              companyName: {factory: w.Textbox, hasLabel:false, error: 'Name is required'}
           }
       }
   }
@@ -71,9 +73,9 @@ const optionsFac = (self) => {
       i18n : { optional : '', required : ' *', add: __('Add'), remove: __('Remove') },
       fields: {
           companyList: {
-            factory: w.SimpleList, 
-            addItemHandler: (button) => { console.log("Add button clicked"); return button.click()},            
-            addText: __("New Company"), 
+            factory: w.SimpleList,
+            addItemHandler: (button) => { console.log("Add button clicked"); return button.click()},
+            addText: __("New Company"),
             item : companyOptions() },
       }
   }
@@ -105,6 +107,9 @@ const formTemplate = (self) => {
         <Container>
           <H2>{"Company Settings"}</H2>
           <CompanyPane>
+
+            <ErrorMsg>{self.getErrorMsg()}</ErrorMsg>
+
             <CompanyRow>
               <CompanyNo>{"Company No"}</CompanyNo>
               <Abbreviation>{"Abbreviation"}</Abbreviation>
@@ -120,29 +125,31 @@ const formTemplate = (self) => {
 export default class CompanyTab extends React.Component {
   constructor(props) {
       super(props);
-      this.state = {value: {companyList: [] } };
+      // this.state = {value: {companyList: [] } };
       this.onFormChange = this.onFormChange.bind(this)
   }
   onFormChange(raw,path){
-      console.log("onFormChange", path, raw);
-      this.setState({value:raw});
+      // console.log("onFormChange, raw", raw, " path=", path);
+      // this.setState({value:raw});
+      let p = path.slice(0,path.length-1)
+      // let comp = this.refs.form.getComponent(path)
+      let comp = this.form.getComponent(path)
+      if (comp && _.get(raw,path)) {
+        comp.validate()
+        // console.log("form.getValue=", this.form.getValue() )
+      }
+      this.props.actions.settingsCompSet(raw)
   }
+  getErrorMsg(){
+    return '' //placeholder now, can be use for errors later on
+  }
+
   render() {
+
+      const {inputRef, companies} = this.props;
       return (
-          <Form type={modelFac(this)} options={optionsFac(this)} 
-                value={this.state.value} onChange={this.onFormChange} />
+          <Form ref={f => {this.form=f;inputRef(f); }} type={modelFac(this)} options={optionsFac(this)}
+                value={companies.toJS()} onChange={this.onFormChange} />
       )
   }
 }
-
-
-
-// const Content = (props) => {
-//   return (
-//     <div>Company Settings</div>
-//   )
-
-
-// }
-
-// export default Content;
