@@ -30,7 +30,6 @@ import * as actions from './actions';
 
 
 var {ButtonGroup, Button, Alert, Grid, Row, Col } = require('react-bootstrap')
-import '../../css/bootstrap.css'
 import {Textbox} from 'components/Widgets'
 const formatNumber = (number, dp=0) => new Intl.NumberFormat('en',{style:'decimal', minimumFractionDigits: dp}).format(number) 
 

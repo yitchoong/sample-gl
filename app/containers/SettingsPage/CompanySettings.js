@@ -7,8 +7,6 @@ import _ from 'lodash'
 import t from 'tcomb-form';
 import * as w from 'components/Widgets'
 
-//import '../../css/bootstrap.css'
-
 const __ = (code) => code
 
 
@@ -40,6 +38,18 @@ const CompanyName = styled.span`
 const ErrorMsg = styled.div`
   color: red;
 `
+const CompanyNoLabel = styled.span`
+  flex: 3;
+  margin-right:0px;
+`
+const AbbreviationLabel = styled.span`
+  flex: 4;
+  margin-left:10px;
+`
+const CompanyNameLabel = styled.span`
+  flex: 8.5;
+`
+
 
 const Form = t.form.Form
 
@@ -60,10 +70,12 @@ const optionsFac = (self) => {
   const companyOptions = () => {
       return {
           template: companyTemplate(self),
+          auto: 'placeholders',
+          i18n: {required:'', optional:''},
           fields: {
-              companyNo: {factory: w.Textbox, hasLabel:false, error:'Must be < 4 chars'},
-              abbreviation: {factory: w.Textbox, hasLabel:false},
-              companyName: {factory: w.Textbox, hasLabel:false, error: 'Name is required'}
+              companyNo: {factory: w.Textbox, hasLabel:true, error:'Must be < 4 chars'},
+              abbreviation: {factory: w.Textbox, hasLabel:true},
+              companyName: {factory: w.Textbox, hasLabel:true, error: 'Name is required'}
           }
       }
   }
@@ -111,10 +123,11 @@ const formTemplate = (self) => {
             <ErrorMsg>{self.getErrorMsg()}</ErrorMsg>
 
             <CompanyRow>
-              <CompanyNo>{"Company No"}</CompanyNo>
-              <Abbreviation>{"Abbreviation"}</Abbreviation>
-              <CompanyName>{"Company Name"}</CompanyName>
+              <CompanyNoLabel>{"Company No"}</CompanyNoLabel>
+              <AbbreviationLabel>{"Abbreviation"}</AbbreviationLabel>
+              <CompanyNameLabel>{"Company Name"}</CompanyNameLabel>
             </CompanyRow>
+
               {inputs.companyList}
           </CompanyPane>
         </Container>
@@ -148,8 +161,11 @@ export default class CompanyTab extends React.Component {
 
       const {inputRef, companies} = this.props;
       return (
+        <div style={{width:'80%'}}>
+
           <Form ref={f => {this.form=f;inputRef(f); }} type={modelFac(this)} options={optionsFac(this)}
                 value={companies.toJS()} onChange={this.onFormChange} />
+        </div>
       )
   }
 }

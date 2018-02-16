@@ -33,24 +33,24 @@ const GlPeriodRow = styled.div`
 `
 
 const GlPeriodNo = styled.span`
-  flex: 1;
+  flex: 3.1;
   margin-right:20px;
 `
 const GlPeriodStart = styled.span`
-  flex: 5;
+  flex: 6;
   margin-right:20px;
 `
 const GlPeriodStartLabel = styled.span`
-  flex: 5;
+  flex: 6;
   margin-right:0px;
 `
 
 const GlPeriodEnd = styled.span`
-  flex:5;
+  flex:6;
   margin-right:20px;
 `
 const GlPeriodEndLabel = styled.span`
-  flex: 6;
+  flex: 8;
   margin-right:0px;
 `
 
@@ -59,7 +59,7 @@ const GlPeriodOpen = styled.span`
   margin-right: 20px;
 `
 const GlPeriodOpenText = styled.span`
-  flex: 3.6;
+  flex: 5;
 `
 
 const LastColumn = styled.span`
@@ -81,7 +81,7 @@ const FilterYear = styled.span`
 
 
 const Form = t.form.Form
-const Positive = t.refinement(t.Number, (n) => n >= 0);
+const Positive = t.refinement(t.Number, (n) => n >= 0 && year > 2000 );
 
 const filterFac = (self) => {
   let compMap = {}
@@ -124,7 +124,7 @@ const filterTemplate = (self) => {
 const modelFac = (self) => {
   const Period = t.struct({
       companyNo: t.maybe(t.String),
-      periodNo: Positive,
+      periodNo: t.String,
       periodOpen: t.maybe(t.Boolean),
       periodStart: t.Date,
       periodEnd: t.Date,
@@ -140,7 +140,7 @@ const optionsFac = (self) => {
           template: glPeriodTemplate(self),
           fields: {
               companyNo: {factory: w.Textbox, type:'hidden', hasLabel:false },
-              periodNo: {factory: w.Decimal, hasLabel:false, dp:0 },
+              periodNo: {factory: w.Textbox, hasLabel:false, disabled:true },
               periodOpen: {factory: w.CheckBox, hasLabel:false},
               periodStart: {factory: w.Datetime, hasLabel:false, order: ['D','M','YY']},
               periodEnd: {factory: w.Datetime, hasLabel:false, order: ['D','M','YY']}
@@ -221,10 +221,11 @@ export default class GlPeriodTab extends React.Component {
     const {glPeriods} = this.props;
     let yy,mm,dd, start, end;
     let periods, prds;
-    if (company && year && year.length > 3) {
-      periods = glPeriods.filter(p => getYear(p.get("periodStart")) === parseInt(year) && p.get("companyNo") === company )
+    if (company && year && year.length === 4 ) {
+      //periods = glPeriods.filter(p => getYear(p.get("periodStart")) === parseInt(year) && p.get("companyNo") === company )      
+      periods = glPeriods.filter(p => p.get("periodNo").substring(0,4) === year) ; // periods should be e.g. 2018-01
       if (periods.size > 0) {
-        prds = periods // periods already exist
+        prds = periods.toJS() // periods already exist
       } else {
         // no periods -- so initialize
         yy = parseInt(year)
@@ -234,12 +235,12 @@ export default class GlPeriodTab extends React.Component {
         })
         dates.push([dates[11][0], dates[11][1]]) // for period 13
         let rows = dates.map( (item,idx) => {
-          return {companyNo: company, periodNo: idx+1, periodOpen:false, periodStart:item[0], periodEnd:item[1]}
+          return {companyNo: company, periodNo: year + '-' + _.padStart((idx+1)+'',2,'0'), periodOpen:false, periodStart:item[0], periodEnd:item[1]}
         })
-        prds= fromJS({glPeriodList: rows})
+        prds = rows
       }
     } else {
-      prds = fromJS({glPeriodList:[]}) // empty until both comp & year specified
+      prds = [] // empty until both comp & year specified
     }
     let uiData = this.props.uiData.toJS()
     uiData.filter = raw
@@ -248,18 +249,20 @@ export default class GlPeriodTab extends React.Component {
 
   }
   onFormChange(raw,path){
-      // console.log("onFormChange", path, "raw", raw);
-      this.props.actions.settingsPrdSet(raw)
+      console.log("onFormChange", path, "raw", raw);
+      this.props.actions.settingsPrdSet(raw.glPeriodList)
   }
   render() {
-      const glPeriods = this.props.glPeriods.toJS();
       const filter = this.props.uiData.get("filter").toJS()
+      let glPeriods = this.props.glPeriods.filter(p => p.get("periodNo").substring(0,4) === filter.year && p.get("companyNo") === filter.company ) 
+      // debugger
+      glPeriods = {glPeriodList: glPeriods.toJS()};
       return (
-          <div>
+          <div style={{width:'80%'}}>
             <Form ref="cform" type={filterFac(this)} options={filterOpts}
             value={filter} onChange={this.onFilterChange} />
             <Form type={modelFac(this)} options={optionsFac(this)}
-                  value={glPeriods} onChange={this.onFormChange} />
+                  value={ glPeriods } onChange={this.onFormChange} />
           </div>
       )
   }

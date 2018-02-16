@@ -180,54 +180,40 @@ export default class SegmentTab extends React.Component {
       super(props);
       this.onFormChange = this.onFormChange.bind(this)
       this.onFilterChange = _.debounce( this.onFilterChange.bind(this),50)
-      // this.state = {filter: {company:''}}
-      // this.state = {value: {segmentList: [
-      //   {segmentNo: 1, segmentUsed: true, segmentAbbrev:'S1', segmentName: 'Segment 1'},
-      //   {segmentNo: 2, segmentUsed: true, segmentAbbrev:'S2', segmentName: 'Segment 2'},
-      //   {segmentNo: 3, segmentUsed: true, segmentAbbrev:'S3', segmentName: 'Segment 3'},
-      //   {segmentNo: 4, segmentUsed: true, segmentAbbrev:'S4', segmentName: 'Segment 4'},
-      // ], filter: {company: ''} } };
   }
   onFilterChange(raw,path) {
     const comp = raw.company
     let segments, segs;
     if (comp) {
       segments = this.props.segments.filter(seg => seg.get("companyNo") === raw.company )
-      segs = segments.size > 0 ? segments : fromJS({segmentList: [
+      segs = segments.size > 0 ? segments.toJS() :  [
         {companyNo: comp, segmentNo:1, segmentUsed: false, segmentAbbrev:'S1', segmentName: ''},
         {companyNo: comp, segmentNo:2, segmentUsed: false, segmentAbbrev:'S2', segmentName: ''},
         {companyNo: comp, segmentNo:3, segmentUsed: false, segmentAbbrev:'S3', segmentName: ''},
         {companyNo: comp, segmentNo:4, segmentUsed: false, segmentAbbrev:'S4', segmentName: ''}
-      ]})
+      ]
     } else {
-      segs = fromJS({segmentList: []})
+      segs = []
     }
+
     let uiData = this.props.uiData.toJS()
-    uiData.filter = raw
+    uiData.filter = raw    
     this.props.actions.settingsUiDataSet(uiData)
     this.props.actions.settingsSegmentSet(segs)
-    // this.setState({filter:raw});
-    // console.log("OnFilterChange, uiData=",uiData  )
-
   }
   onFormChange(raw,path){
-      // this.setState({value:raw});
-      const comp = this.props.uiData.get("filter").get("company")
-      raw.segmentList.forEach(s => s.companyNo = comp)
-      this.props.actions.settingsSegmentSet(raw)
-      // console.log("onFormChange", path, "raw", raw);
+    this.props.actions.settingsSegmentSet(raw.segmentList)    
   }
   render() {
-      const {segments} = this.props
-      const segs = segments.toJS()
       const filter = this.props.uiData.get("filter").toJS()
-      // console.log("segments", segs, "filter", filter)
+      const segs = this.props.segments.filter(s => s.get("companyNo") === filter.company )
+      const segList = {segmentList: segs.toJS()}
       return (
           <div>
             <Form ref="cform" type={companyFac(this)} options={coyOpts}
               value={filter} onChange={this.onFilterChange} />
             <Form type={modelFac(this)} options={optionsFac(this)}
-                  value={segs} onChange={this.onFormChange} />
+                  value={segList} onChange={this.onFormChange} />
           </div>
       )
   }

@@ -19,7 +19,6 @@ import parse from 'date-fns/parse'
 import isValid from 'date-fns/is_valid'
 
 import {Tabs, Tab, Grid, Row, Col, Button, Nav, NavItem} from 'react-bootstrap'
-import '../../css/bootstrap.css'
 
 import injectSaga from 'utils/injectSaga';
 import injectReducer from 'utils/injectReducer';
@@ -105,7 +104,7 @@ export class SettingsPage extends React.PureComponent { // eslint-disable-line r
                       <NavItem eventKey={4} > {"GL Periods"} </NavItem>
                     </Nav>
                 </div>
-                <div style={{flex:1}}>
+                <div style={{flex:1, marginRight:'10px'}}>
                       <Button bsStyle={"info"} onClick={()=>alert('Clicked')}>Save Settings</Button>
                 </div>
             </TabContainer>

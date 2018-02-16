@@ -17,6 +17,7 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import styled from 'styled-components';
 import { Switch, Route } from 'react-router-dom';
+import '../../css/bootstrap.css'
 
 import HomePage from 'containers/HomePage/Loadable';
 import SettingsPage from 'containers/SettingsPage/Loadable';
