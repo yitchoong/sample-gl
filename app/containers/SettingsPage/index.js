@@ -84,6 +84,10 @@ export class SettingsPage extends React.PureComponent { // eslint-disable-line r
       this.setState({tabKey:key})
     }
   }
+  componentDidMount(){
+    // need to fetch the settings
+    this.props.actions.settingsFetch()
+  }
   render() {
     const {match, actions, companies,segments,currencies,glPeriods,uiData} = this.props;
     const extraProps = {match,actions,companies,segments,currencies,glPeriods,uiData}

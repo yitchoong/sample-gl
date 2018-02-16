@@ -17,7 +17,7 @@ function* getRecentVouchers() {
   // Select username from store
   // const username = yield select(makeSelectUsername());
   // const requestURL = `https://api.github.com/users/${username}/repos?type=all&sort=updated`;
-  const requestUrl = `http://localhost:8080/receentVouchers.json`
+  const requestUrl = `http://localhost:8080/recentVouchers.json`
 
   try {
     const jvs = yield call(request, requestURL);
@@ -108,4 +108,3 @@ export default function* rootSaga () {
       fork(homePageWatcher),
   ];
 }
-

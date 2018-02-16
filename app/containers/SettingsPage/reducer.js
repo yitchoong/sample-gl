@@ -23,7 +23,8 @@ function settingsPageReducer(state = initialState, action) {
   let index, year, company, row,rows;
   switch (action.type) {
     case c.SETTINGS_FETCH_OK:
-      return action.settings.setIn(["uiData","currentTab"], fromJS(action.currentTab))
+      return fromJS(action.settings)
+    return action.settings.setIn(["uiData","currentTab"], fromJS(action.currentTab))
     case c.SETTINGS_FETCH_KO:
       return state.setIn(["uiData","errors"], fromJS(action.errors))
     case c.SETTINGS_COY_SET:
