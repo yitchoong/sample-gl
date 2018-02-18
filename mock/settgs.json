@@ -1,14 +1,14 @@
 {
     "companies": { "companyList":
-        [{"companyNo" : "1", "abbreviation" : "zzt", "companyName" : "zztop corp"}],
-        "segments":[],
-        "glPeriods":[],
-        "currencies": {"currencyList":[]},
-        "uiData": {
+        [{"companyNo" : "1", "abbreviation" : "zzt", "companyName" : "zztop corp"}]
+    },
+    "segments":[],
+    "glPeriods":[],
+    "currencies": {"currencyList":[]},
+    "uiData": {
             "error":false,
             "loading": false,
             "currentTab": 1,
             "filter":{}
-        }
     }
 }

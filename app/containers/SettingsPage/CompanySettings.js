@@ -9,51 +9,30 @@ import * as w from 'components/Widgets'
 
 const __ = (code) => code
 
-
 const Container = styled.div`
   margin: 5px;
 `;
-const CompanyPane = styled.div`
+const Pane = styled.div`
   margin: 5px;
   border: solid 1px #FFF;
 `;
 
-const CompanyRow = styled.div`
-  margin: 2px;
-  border: solid 1px #FFF;
+const Row = styled.div`
+  border: solid 0px #FFF;
   display: flex;
   flex-direction: row;
 `
-const CompanyNo = styled.span`
-  flex: 3;
-  margin-right:10px;
-`
-const Abbreviation = styled.span`
-  flex: 4;
-  margin-right:10px;
-`
-const CompanyName = styled.span`
-  flex: 6;
+const Column = styled.span`
+  margin-left: 2px;
+  margin-right: 2px;
+  flex: ${props => props.flex}  
 `
 const ErrorMsg = styled.div`
   color: red;
 `
-const CompanyNoLabel = styled.span`
-  flex: 3;
-  margin-right:0px;
-`
-const AbbreviationLabel = styled.span`
-  flex: 4;
-  margin-left:10px;
-`
-const CompanyNameLabel = styled.span`
-  flex: 8.5;
-`
-
-
 const Form = t.form.Form
 
-const ShortField = t.refinement(t.String, (s) => s.length <= 3);
+const ShortField = t.refinement(t.String, (s,t,o) => {return s.length <= 3});
 
 const modelFac = (self) => {
   const Company = t.struct({
@@ -69,7 +48,7 @@ const optionsFac = (self) => {
 
   const companyOptions = () => {
       return {
-          template: companyTemplate(self),
+          template: w.ListTemplate(self,3,[2,2,6]),
           auto: 'placeholders',
           i18n: {required:'', optional:''},
           fields: {
@@ -81,7 +60,7 @@ const optionsFac = (self) => {
   }
 
   return {
-      template: formTemplate(self),
+      // template: formTemplate(self),
       i18n : { optional : '', required : ' *', add: __('Add'), remove: __('Remove') },
       fields: {
           companyList: {
@@ -92,66 +71,40 @@ const optionsFac = (self) => {
       }
   }
 }
-const companyTemplate = (self) => {
-  return (locals) => {
-      const inputs = locals.inputs;
-      return (
-        <CompanyRow>
-            <CompanyNo>
-              {inputs.companyNo}
-            </CompanyNo>
-
-            <Abbreviation>
-              {inputs.abbreviation}
-            </Abbreviation>
-
-            <CompanyName>
-              {inputs.companyName}
-            </CompanyName>
-        </CompanyRow>
-      )
-  };
-}
-const formTemplate = (self) => {
-  return (locals) => {
-      let inputs = locals.inputs;
-      return (
-        <Container>
-          <H2>{"Company Settings"}</H2>
-          <CompanyPane>
-
-            <ErrorMsg>{self.getErrorMsg()}</ErrorMsg>
-
-            <CompanyRow>
-              <CompanyNoLabel>{"Company No"}</CompanyNoLabel>
-              <AbbreviationLabel>{"Abbreviation"}</AbbreviationLabel>
-              <CompanyNameLabel>{"Company Name"}</CompanyNameLabel>
-            </CompanyRow>
-
-              {inputs.companyList}
-          </CompanyPane>
-        </Container>
-      );
-  }
-}
 
 export default class CompanyTab extends React.Component {
   constructor(props) {
       super(props);
       // this.state = {value: {companyList: [] } };
       this.onFormChange = this.onFormChange.bind(this)
+      this.formError = ''
   }
   onFormChange(raw,path){
-      // console.log("onFormChange, raw", raw, " path=", path);
-      // this.setState({value:raw});
-      let p = path.slice(0,path.length-1)
-      // let comp = this.refs.form.getComponent(path)
-      let comp = this.form.getComponent(path)
-      if (comp && _.get(raw,path)) {
-        comp.validate()
-        // console.log("form.getValue=", this.form.getValue() )
-      }
+      this.formError = ''
+      // let p = path.slice(0,path.length-1)
+      let res, form = this.form.getComponent(path)
+      form && form.removeErrors()
+      if (form && _.get(raw,path)) res = form.validate()
       this.props.actions.settingsCompSet(raw)
+  }
+  validateForm(raw, path) {
+    // call validateForm for cross field validations, in this case, not required
+    return []
+
+    const p = path && path.length > 1 ? path.slice(0,2) : ["companyList",-1]
+    let res,name, errorList = [], data = _.get(raw,[p[0]])
+    if (!data) return [] // no data, no need to validate
+    data.forEach((item,idx) => {
+        if ( idx !== p[1] ) {
+          const row = _.get(raw,[p[0],idx]) // get the row data to check
+          res = row.validate()
+          if (res.errors && res.errors.length > 0 ) {
+            errorList.push( `Row ${idx+1}, has errors` )
+          }
+        }
+    })
+    return errorList
+    
   }
   getErrorMsg(){
     return '' //placeholder now, can be use for errors later on
@@ -161,7 +114,22 @@ export default class CompanyTab extends React.Component {
 
       const {inputRef, companies} = this.props;
       return (
-        <div style={{width:'80%'}}>
+        <div style={{width:'90%'}}>
+
+          <Container>
+              <H2>{"Company Settings"}</H2>
+              <Pane>
+
+                <ErrorMsg>{this.getErrorMsg()}</ErrorMsg>
+
+                <Row>
+                  <Column flex={2}>{"Company No"}</Column>
+                  <Column flex={2}>{"Abbreviation"}</Column>
+                  <Column flex={6}>{"Company Name"}</Column>
+                  <Column flex={1}>&nbsp;</Column>
+                </Row>
+              </Pane>
+          </Container>
 
           <Form ref={f => {this.form=f;inputRef(f); }} type={modelFac(this)} options={optionsFac(this)}
                 value={companies.toJS()} onChange={this.onFormChange} />

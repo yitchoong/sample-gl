@@ -78,11 +78,38 @@ export class SettingsPage extends React.PureComponent { // eslint-disable-line r
     const url = tab ? `/settings/${tab}/` : '/settings/'
     // validate if tab is ok  before we change?
     const activeKey = this.refs.nav.props.activeKey
-    let canChange = activeKey === 1 && !this.compform.getValue() ? false : true
+    let canChange, data, errs;
+    switch (activeKey) {
+      case 1:
+        canChange = !this.compform.getValue() ? false : true
+        break
+      case 2:
+        data = this.segform.getValue() // 
+        canChange = !data ? false : true
+        if (canChange) {
+          errs = this.seg.validateForm(data) // for dependent field validations
+          canChange = errs.length === 0 ? true : false          
+        }
+        break
+      case 3:
+        canChange = !this.ccyform.getValue() ? false : true
+        break
+    case 4:
+      data = this.glform.getValue()
+      canChange = !data ? false : true
+      if (canChange) {
+        errs = this.glp.validateForm(data)
+        canChange = errs.length === 0 ? true : false
+      }
+      break
+    default:
+      canChange = false;
+    }
     if (canChange && key !== activeKey) {
       this.props.history.push(url)
       this.setState({tabKey:key})
-    }
+    } 
+      
   }
   componentDidMount(){
     // need to fetch the settings
@@ -115,11 +142,11 @@ export class SettingsPage extends React.PureComponent { // eslint-disable-line r
             <TabContent>
                 <Switch>
                   {/*<Route exact path={`${match.path}/`}  component={Company} /> */}
-                  <Route exact path={`${match.path}/`}  render={(props) => (<Company inputRef={f=>this.compform=f} {...props} {...extraProps}  />)} />
-                  <Route  path={`${match.path}/company/`}  render={(props) => (<Company inputRef={f=>this.compform=f} {...props} {...extraProps} />)} />
-                  <Route  path={`${match.path}/segment/`}  render={(props) => (<Segment {...props} {...extraProps} />)} />
-                  <Route  path={`${match.path}/currency/`} render={(props) => (<Currency {...props} {...extraProps} />)} />
-                  <Route  path={`${match.path}/glperiod/`} render={(props) => (<GlPeriod {...props} {...extraProps} />)} />
+                  <Route exact path={`${match.path}/`}  render={(props) => (<Company ref={f=>this.comp=f} inputRef={f=>this.compform=f} {...props} {...extraProps}  />)} />
+                  <Route  path={`${match.path}/company/`}  render={(props) => (<Company ref={f=>this.comp=f} inputRef={f=>this.compform=f} {...props} {...extraProps} />)} />
+                  <Route  path={`${match.path}/segment/`}  render={(props) => (<Segment ref={f=>this.seg=f} inputRef={f=>this.segform=f} {...props} {...extraProps} />)} />
+                  <Route  path={`${match.path}/currency/`} render={(props) => (<Currency ref={f=>this.ccy=f} inputRef={f=>this.ccyform=f} {...props} {...extraProps} />)} />
+                  <Route  path={`${match.path}/glperiod/`} render={(props) => (<GlPeriod ref={f=>this.glp=f} inputRef={f=>this.glform=f} {...props} {...extraProps} />)} />
                 </Switch>
               </TabContent>
 

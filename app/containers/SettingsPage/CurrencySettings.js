@@ -10,26 +10,25 @@ const __ = (code) => code
 
 
 const Container = styled.div`
-  margin: 5px;
+  margin: 2px;
 `;
-
-const CurrencyPane = styled.div`
-  margin: 5px;
-  border: solid 1px #FFF;
-`;
-
-const CurrencyRow = styled.div`
+const Pane = styled.div`
   margin: 2px;
   border: solid 1px #FFF;
+`;
+
+const Row = styled.div`
+  border: solid 0px #FFF;
   display: flex;
   flex-direction: row;
 `
-const CurrencyCode = styled.span`
-  flex: 1;
-  margin-right:10px;
+const Column = styled.span`
+  margin-left: 2px;
+  margin-right: 2px;
+  flex: ${props => props.flex}  
 `
-const CurrencyName = styled.span`
-  flex: 4;
+const ErrorMsg = styled.div`
+  color: red;
 `
 
 const Form = t.form.Form
@@ -37,7 +36,7 @@ const Form = t.form.Form
 const modelFac = (self) => {
   const Currency = t.struct({
       currencyCode: t.String,
-      currencyName: t.maybe(t.String),
+      currencyName: t.String,
   })
   return t.struct({
     currencyList: t.maybe(t.list(Currency)),
@@ -47,15 +46,16 @@ const optionsFac = (self) => {
 
   const currencyOptions = () => {
       return {
-          template: currencyTemplate(self),
+          // template: currencyTemplate(self),
+          template: w.ListTemplate(self,2,[2,7]),
           fields: {
-              currencyCode: {factory: w.Textbox, hasLabel:false},
-              currencyName: {factory: w.Textbox, hasLabel:false}
+              currencyCode: {factory: w.Textbox, hasLabel:false, error: __("Required field"), attrs:{style:{width:'80%'}}},
+              currencyName: {factory: w.Textbox, hasLabel:false, error: __("Required field")}
           }
       }
   }
   return {
-      template: formTemplate(self),
+      // template: formTemplate(self),
       i18n : { optional : '', required : ' *', add: __('Add'), remove: __('Remove') },
       fields: {
           currencyList: {
@@ -64,40 +64,6 @@ const optionsFac = (self) => {
             addText: __("New Currency"),
             item : currencyOptions() },
       }
-  }
-}
-const currencyTemplate = (self) => {
-  return (locals) => {
-      const inputs = locals.inputs;
-      return (
-        <CurrencyRow>
-            <CurrencyCode>
-              {inputs.currencyCode}
-            </CurrencyCode>
-
-            <CurrencyName>
-              {inputs.currencyName}
-            </CurrencyName>
-        </CurrencyRow>
-      )
-  };
-}
-const formTemplate = (self) => {
-  return (locals) => {
-      let inputs = locals.inputs;
-      return (
-        <Container>
-          <H2>{"Currency Settings"}</H2>
-          <CurrencyPane>
-            <CurrencyRow>
-              <CurrencyCode>{__("Currency Code")}</CurrencyCode>
-              <CurrencyName>{__("Currency Name")}</CurrencyName>
-              <span style={{width:'20px'}}>&nbsp;</span>
-            </CurrencyRow>
-              {inputs.currencyList}
-          </CurrencyPane>
-        </Container>
-      );
   }
 }
 
@@ -111,11 +77,29 @@ export default class CurrencyTab extends React.Component {
       // this.setState({value:raw});
       this.props.actions.settingsCcySet(raw)
   }
+  getErrorMsg(){
+    return ''
+  }
   render() {
-      const {currencies} = this.props;
+      const {currencies,inputRef} = this.props;
       return (
-          <Form type={modelFac(this)} options={optionsFac(this)}
+        <div style={{width:'70%'}}>
+
+          <Container>
+              <H2>{"Currency Settings"}</H2>
+              <Pane>
+                <ErrorMsg>{this.getErrorMsg()}</ErrorMsg>              
+                <Row>
+                  <Column flex={2}>{__("Currency Code")}</Column>
+                  <Column flex={7}>{__("Currency Name")}</Column>
+                  <Column flex={1}>&nbsp;</Column>
+                </Row>
+              </Pane>
+          </Container>
+
+          <Form ref={f => {this.form=f;inputRef(f); }} type={modelFac(this)} options={optionsFac(this)}
                 value={currencies.toJS()} onChange={this.onFormChange} />
+        </div>
       )
   }
 }

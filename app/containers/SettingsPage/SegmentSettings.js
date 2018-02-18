@@ -6,67 +6,30 @@ import {fromJS} from 'immutable'
 import t from 'tcomb-form';
 import * as w from 'components/Widgets'
 import _ from 'lodash'
-
-//import '../../css/bootstrap.css'
+import {Alert} from 'react-bootstrap'
 
 const __ = (code) => code
-
 
 const Container = styled.div`
   margin: 5px;
 `;
-const SegmentPane = styled.div`
+const Pane = styled.div`
   margin: 5px;
   border: solid 1px #FFF;
 `;
 
-const CompanyRow = styled.div`
-  margin: 2px;
+const Row = styled.div`
   border: solid 0px #FFF;
   display: flex;
   flex-direction: row;
 `
+const Column = styled.span`
+  margin-right: 2px;
+  flex: ${props => props.flex}  
 
-const SegmentRow = styled.div`
-  margin: 2px;
-  border: solid 1px #FFF;
-  display: flex;
-  flex-direction: row;
 `
-const SegmentNo = styled.span`
-  flex: 1;
-  margin-right:20px;
-`
-const SegmentNoText = styled.span`
-  flex: 1;
-  margin-right:10px;
-`
-
-const SegmentUsed = styled.span`
-  flex: 1;
-  margin-right:10px;
-`
-const SegmentAbbrev = styled.span`
-  flex: 2;
-  margin-right:10px;
-`
-const SegmentAbbrevText = styled.span`
-  flex: 2;
-  border: solid 1px;
-`
-
-const SegmentName = styled.span`
-  flex: 6;
-`
-const LastColumn = styled.span`
-  flex: 1.8;
-`
-
-
-const Spacer = styled.span`
-  margin-right: 60px;
-  background-color: #CECECE;
-
+const ErrorMsg = styled.div`
+  color: red;
 `
 
 const Form = t.form.Form
@@ -79,7 +42,6 @@ const companyFac = (self) => {
   if (companies && companies.get("companyList") && companies.get("companyList").size > 0 ) {
     self.props.companies.get("companyList").forEach(co => compMap[co.get("companyNo")] = co.get("companyName"))
   }
-  // const validList = t.enums({'1':'Acme PL',  '2':'Lebih Good'})
   return  t.struct({
     company: t.enums(compMap),
   });
@@ -88,14 +50,15 @@ const companyFac = (self) => {
 const coyOpts = {
   fields: {company: {factory: w.Select, label: __("Company")}}
 }
+const MinText = t.refinement(t.String, (s) => s.length > 3);
 
 const modelFac = (self) => {
   const Segment = t.struct({
-      companyNo: t.maybe(t.String),
       segmentNo: Positive,
       segmentUsed: t.maybe(t.Boolean),
       segmentAbbrev: t.maybe(t.String),
-      segmentName: t.String,
+      segmentName: t.maybe(t.String),
+      companyNo: t.maybe(t.String),
   })
   return t.struct({
     segmentList: t.maybe(t.list(Segment)),
@@ -105,19 +68,19 @@ const optionsFac = (self) => {
 
   const segmentOptions = () => {
       return {
-          template: segmentTemplate(self),
+          template: w.ListTemplate(self,4,[1,1,1,6]),
+          order: ["segmentNo","segmentAbbrev","segmentUsed","segmentName"],
           fields: {
-              companyNo: {factory: w.Textbox, type:'hidden', hasLabel:false},
-              segmentNo: {factory: w.Decimal, hasLabel:false, dp:0, disabled:true },
+              segmentNo: {factory: w.Decimal, hasLabel:false, dp:0, disabled:true, attrs:{style:{width:'50px'}} },
               segmentUsed: {factory: w.CheckBox, hasLabel:false},
-              segmentAbbrev: {factory: w.Textbox, hasLabel:false},
-              segmentName: {factory: w.Textbox, hasLabel:false}
+              segmentAbbrev: {factory: w.Textbox, hasLabel:false,attrs:{style:{width:'50px'}}},
+              segmentName: {factory: w.Textbox, hasLabel:false, error: __("Required field")},
+              companyNo: {factory: w.Textbox, type:'hidden', hasLabel:false}
           }
       }
   }
-
   return {
-      template: formTemplate(self),
+      // template: formTemplate(self),
       i18n : { optional : '', required : ' *', add: __('Add'), remove: __('Remove') },
       fields: {
           segmentList: {
@@ -130,56 +93,13 @@ const optionsFac = (self) => {
       }
   }
 }
-const segmentTemplate = (self) => {
-  return (locals) => {
-      const inputs = locals.inputs;
-      return (
-        <SegmentRow>
-            <SegmentNo>
-              {inputs.segmentNo}
-            </SegmentNo>
-
-            <SegmentUsed>
-              {inputs.segmentUsed}
-            </SegmentUsed>
-
-            <SegmentAbbrev>
-              {inputs.segmentAbbrev}
-            </SegmentAbbrev>
-
-            <SegmentName>
-              {inputs.segmentName}
-            </SegmentName>
-        </SegmentRow>
-      )
-  };
-}
-const formTemplate = (self) => {
-  return (locals) => {
-      let inputs = locals.inputs;
-      return (
-        <Container>
-          <H2 style={{marginTop:'20px'}}>{"Segment Settings"}</H2>
-          <SegmentPane>
-            <SegmentRow>
-              <SegmentNoText>{"Seg#"}</SegmentNoText>
-              <SegmentUsed>{"Used?"}</SegmentUsed>
-              <SegmentAbbrev>&nbsp;{"Abbrev"}</SegmentAbbrev>
-              <SegmentName>{"Segment Name"}</SegmentName>
-              <LastColumn />
-            </SegmentRow>
-              {inputs.segmentList}
-          </SegmentPane>
-        </Container>
-      );
-  }
-}
 
 export default class SegmentTab extends React.Component {
   constructor(props) {
       super(props);
       this.onFormChange = this.onFormChange.bind(this)
       this.onFilterChange = _.debounce( this.onFilterChange.bind(this),50)
+      this.state = {errorList:[]}
   }
   onFilterChange(raw,path) {
     const comp = raw.company
@@ -197,24 +117,79 @@ export default class SegmentTab extends React.Component {
     }
 
     let uiData = this.props.uiData.toJS()
-    uiData.filter = raw    
+    uiData.filter2 = raw    
     this.props.actions.settingsUiDataSet(uiData)
     this.props.actions.settingsSegmentSet(segs)
   }
   onFormChange(raw,path){
+    let p = path.slice(0,path.length-1)
+    let component = this.form.getComponent(path)
+    let res;
+    if (component && _.get(raw,path)) {
+      res = component.validate()      
+      if (res.errors && res.errors.length === 0 ) {
+        this.validateForm(raw,path)
+      } else {
+        this.setState({errorList:[]})
+      }
+    }
     this.props.actions.settingsSegmentSet(raw.segmentList)    
   }
+  validateForm(raw,path){
+    const segno = path && path.length > 1 ? path[1] : -1
+    let errorList = [], name, data = _.get(raw,["segmentList"])
+    if (!data) return [] // no data, no need to validate
+    data.forEach((row,idx) => {
+        if (idx !== segno) {
+          const pth = ["segmentList",idx]
+          let itm = _.get(raw,pth)
+          name = itm.segmentName || ''
+          if (itm.segmentUsed && name.trim().length === 0 ){
+            errorList.push( `Row ${idx+1}, segment name is required` )
+          }
+        } 
+    })
+    this.setState({errorList:errorList})
+    return errorList
+  }
   render() {
-      const filter = this.props.uiData.get("filter").toJS()
+      const filter = this.props.uiData.get("filter2") ? this.props.uiData.get("filter2").toJS() : ''
       const segs = this.props.segments.filter(s => s.get("companyNo") === filter.company )
       const segList = {segmentList: segs.toJS()}
+      const {inputRef} = this.props;
+      
       return (
-          <div>
-            <Form ref="cform" type={companyFac(this)} options={coyOpts}
-              value={filter} onChange={this.onFilterChange} />
-            <Form type={modelFac(this)} options={optionsFac(this)}
+        <div style={{width:'95%'}}>
+            <Container>
+              <H2 style={{marginTop:'20px'}}>{"Segment Settings"}</H2>
+            </Container>
+
+            <Pane>
+              <Row>
+                <Column flex={1}>
+                  <Form ref="cform" type={companyFac(this)} options={coyOpts}
+                    value={filter} onChange={this.onFilterChange} />
+                </Column>
+                <Column flex={2}>&nbsp;</Column>
+              </Row>
+
+              <Pane>
+                {this.state.errorList.length > 0 ?
+                <Alert bsStyle="warning">
+                    <strong>{this.state.errorList.map((e,i) => <div key={i}>{e}</div>)}</strong>  
+                </Alert> : ''}
+                  <Row>
+                    <Column flex={1}>{"Seg#"}</Column>
+                    <Column flex={1}>&nbsp;{"Abbrev"}</Column>
+                    <Column flex={1}>{"Used?"}</Column>
+                    <Column flex={6}>{"Segment Name"}</Column>
+                    <Column flex={1}>&nbsp;</Column>
+                  </Row>
+              </Pane>
+                <Form ref={f => {this.form=f;inputRef(f); }} type={modelFac(this)} options={optionsFac(this)}
                   value={segList} onChange={this.onFormChange} />
-          </div>
+          </Pane>
+          </div>  
       )
   }
 }

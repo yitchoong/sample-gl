@@ -12,6 +12,58 @@ import { ic_clear } from 'react-icons-kit/md/ic_clear';
 
 const SizedIcon = props => <Icon size={props.size || 30} icon={props.icon} style={{margin:"5px"}} />;
 
+const Container = styled.div`
+  margin: 5px;
+  display: flex;
+`;
+const Pane = styled.div`
+  margin: 5px;
+  border: solid 0px #FFF;
+  display: flex;
+`;
+
+const ErrorMsg = styled.div`
+  color: red;
+`
+const Row = styled.div`
+  border: solid 1px #FFF;
+  display: flex;
+  flex-direction: row;
+`
+const Col = styled.span`
+  margin-left: 2px;
+  margin-right: 2px;
+  flex: ${props => props.flex}
+`
+const Col2 = styled.span`
+  margin: 2px;
+  flex: 2;
+`
+const Col3 = styled.span`
+  margin: 2px;
+  flex: 3;
+`
+const Col4 = styled.span`
+  margin: 2px;
+  flex: 4;
+`
+const Col5 = styled.span`
+  margin: 2px;
+  flex: 5;
+`
+const Col6 = styled.span`
+  margin: 2px;
+  flex: 6;
+`
+const Col7 = styled.span`
+  margin: 2px;
+  flex: 1;
+`
+const Col8 = styled.span`
+  margin: 2px;
+  flex: 1;
+`
+
 
 const Form = t.form.Form
 const Nil = t.Nil
@@ -248,14 +300,14 @@ export class SimpleList extends t.form.List {
                 ].concat(children))
             },
             renderRow : (row, locals) => {
-                return (
-                  <div className="row">
-                    {getCol({sm: 10, xs: 10}, row.input)}
-                    {getCol({sm: 1, xs: 1}, template.renderButtonGroup(row.buttons, locals))} 
-                  </div>
-                )
-            },
-            renderButtonGroup: (buttons) => {
+              return (
+                <div style={{flexDirection:'row', display:'flex'}}>
+                  <span style={{flex:9}}>{row.input}</span>
+                  <span style={{flex:1}}>{template.renderButtonGroup(row.buttons, locals)}</span>
+                </div>
+              )
+          },
+          renderButtonGroup: (buttons) => {
               const renderBtn = (button) => {
                   return button.type === 'remove' ? <span key={button.type} onClick={button.click}><SizedIcon icon={ic_clear} /></span> : null
 
@@ -309,3 +361,53 @@ export class CheckBox extends t.form.Checkbox {
       return template;
   }
 }
+
+
+export const ListTemplate = (self,cols=1, flexs) => {
+  const errfn = self.getErrorMsg ? self.getErrorMsg : _
+  const widths = flexs && flexs.length === cols ? flexs : _.range(cols).map(x=>1)
+  return (locals) => {
+      let inputs = locals.inputs;
+      const keys = locals.order ? locals.order : Object.keys(inputs)
+      return (
+        <span>
+            {keys.map((input,idx) => 
+              idx % cols === 0 ? 
+              (<Row key={idx*1000}>
+                { _.range(cols).map( c => ( 
+                  <Col key={idx*100+c} flex={widths[c]}>
+                      {inputs[keys[idx+c]]}
+                  </Col>) 
+                )}
+              </Row>) : null
+            )}
+        </span>
+      );
+  }
+}
+
+export const FormTemplate = (self,cols=1, flexs) => {
+  const errfn = self.getErrorMsg ? self.getErrorMsg : _
+  const widths = flexs && flexs.length === cols ? flexs : _.range(cols).map(x=>1)
+
+  return (locals) => {
+      let inputs = locals.inputs;
+      const keys = Object.keys(inputs)
+      return (
+        <Container>
+          <Pane>
+            <ErrorMsg>{errfn()}</ErrorMsg>
+            {keys.map((input,idx) => 
+              idx % cols === 0 ? 
+              (<Row key={idx*1000}>
+                { _.range(cols).map( c => <Col key={idx*100+c}>
+                    {inputs[keys[idx+c]]} </Col> )
+                }
+              </Row>) : null
+            )}
+          </Pane>
+        </Container>
+      );
+  }
+}
+

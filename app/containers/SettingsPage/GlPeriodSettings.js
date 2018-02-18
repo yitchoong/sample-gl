@@ -4,10 +4,11 @@ import styled from 'styled-components';
 import H2 from 'components/H2'
 import _ from 'lodash'
 import {fromJS} from 'immutable'
+import {Alert} from 'react-bootstrap'
 
-import formatDate from 'date-fns/format'
+// import formatDate from 'date-fns/format'
+// import isValid from 'date-fns/is_valid'
 import parse from 'date-fns/parse'
-import isValid from 'date-fns/is_valid'
 import getYear from 'date-fns/get_year'
 import endOfMonth from 'date-fns/end_of_month'
 
@@ -16,67 +17,37 @@ import * as w from 'components/Widgets'
 
 const __ = (code) => code
 
+
 const Container = styled.div`
   margin: 5px;
 `;
-
-const GlPeriodPane = styled.div`
+const Pane = styled.div`
   margin: 5px;
   border: solid 1px #FFF;
 `;
 
-const GlPeriodRow = styled.div`
-  margin: 2px;
+const Row = styled.div`
   border: solid 0px #FFF;
   display: flex;
   flex-direction: row;
 `
-
-const GlPeriodNo = styled.span`
-  flex: 3.1;
-  margin-right:20px;
+const Column = styled.span`
+  flex: ${props => props.flex}  
 `
-const GlPeriodStart = styled.span`
-  flex: 6;
-  margin-right:20px;
+const Bold = styled.span`
+  font-weight: bold;
 `
-const GlPeriodStartLabel = styled.span`
-  flex: 6;
-  margin-right:0px;
+const Col = styled.span.attrs({
+  flex: props => props.flex || '1',
+  // marginRight: props => props.marginRight || '0px',
+  // marginLeft: props => props.marginLeft || '0px'
+})`
+  flex: ${props => props.flex};
+  margin-left: ${props => props.marginLeft};
+  margin-right: ${props => props.marginRight};
 `
-
-const GlPeriodEnd = styled.span`
-  flex:6;
-  margin-right:20px;
-`
-const GlPeriodEndLabel = styled.span`
-  flex: 8;
-  margin-right:0px;
-`
-
-const GlPeriodOpen = styled.span`
-  flex: 1;
-  margin-right: 20px;
-`
-const GlPeriodOpenText = styled.span`
-  flex: 5;
-`
-
-const LastColumn = styled.span`
-  width: 30px;
-`
-const Row = styled.div`
-  margin: 2px;
-  border: solid 1px #EFF;
-  display: flex;
-  flex-direction: row;
-`
-const FilterCompany = styled.span`
-  flex: 1;
-  margin-right:10px;
-`
-const FilterYear = styled.span`
-  flex: 1;
+const ErrorMsg = styled.div`
+  color: red;
 `
 
 
@@ -89,45 +60,45 @@ const filterFac = (self) => {
   if (companies && companies.get("companyList") && companies.get("companyList").size > 0 ) {
     self.props.companies.get("companyList").forEach(co => compMap[co.get("companyNo")] = co.get("companyName"))
   }
-
   return  t.struct({
     company: t.enums(compMap),
     year: t.maybe(Positive)
   });
 }
-
 const filterOpts = (self) => {
   return {
-    template: filterTemplate(),
+    // template: filterTemplate(),
+    template: w.ListTemplate(self,2,[0.3,0.1]),
     fields: {
       company: {factory: w.Select, label: __("Company")},
       year: {factory:w.Textbox, label:__("Year")}
     }
   }
 }
-const filterTemplate = (self) => {
-  return (locals) => {
-      const inputs = locals.inputs;
-      return (
-        <Row>
-            <FilterCompany>
-              {inputs.company}
-            </FilterCompany>
-            <FilterYear>
-              {inputs.year}
-            </FilterYear>
-        </Row>
-      )
-  };
-}
+// const filterTemplate = (self) => {
+//   return (locals) => {
+//       const inputs = locals.inputs;
+//       return (
+//         <Row>
+//             <Col flex={3} marginRight={"50px"}>
+//               {inputs.company}
+//             </Col>
+//             <Col flex={1}>
+//               {inputs.year}
+//             </Col>
+//             <Column flex={3}>&nbsp;</Column>
+//         </Row>
+//       )
+//   };
+// }
 
 const modelFac = (self) => {
   const Period = t.struct({
-      companyNo: t.maybe(t.String),
       periodNo: t.String,
       periodOpen: t.maybe(t.Boolean),
       periodStart: t.Date,
       periodEnd: t.Date,
+      companyNo: t.maybe(t.String),
   })
   return t.struct({
     glPeriodList: t.maybe(t.list(Period)),
@@ -137,19 +108,21 @@ const optionsFac = (self) => {
 
   const glPeriodOptions = () => {
       return {
-          template: glPeriodTemplate(self),
+          // template: glPeriodTemplate(self),
+          template: w.ListTemplate(self,4,[2,3,3,2]),
+          order: ["periodNo","periodStart","periodEnd","periodOpen"],
           fields: {
-              companyNo: {factory: w.Textbox, type:'hidden', hasLabel:false },
-              periodNo: {factory: w.Textbox, hasLabel:false, disabled:true },
+              periodNo: {factory: w.Textbox, hasLabel:false, disabled:true, attrs:{style:{width:'60%'}} },
               periodOpen: {factory: w.CheckBox, hasLabel:false},
               periodStart: {factory: w.Datetime, hasLabel:false, order: ['D','M','YY']},
-              periodEnd: {factory: w.Datetime, hasLabel:false, order: ['D','M','YY']}
+              periodEnd: {factory: w.Datetime, hasLabel:false, order: ['D','M','YY']},
+              companyNo: {factory: w.Textbox, type:'hidden', hasLabel:false },
           }
       }
   }
 
   return {
-      template: formTemplate(self),
+      // template: formTemplate(self),
       i18n : { optional : '', required : ' *', add: __('Add'), remove: __('Remove') },
       fields: {
           glPeriodList: {
@@ -162,59 +135,13 @@ const optionsFac = (self) => {
       }
   }
 }
-const glPeriodTemplate = (self) => {
-  return (locals) => {
-      const inputs = locals.inputs;
-      return (
-        <GlPeriodRow>
-            <GlPeriodNo>
-              {inputs.periodNo}
-            </GlPeriodNo>
-
-            <GlPeriodStart>
-              {inputs.periodStart}
-            </GlPeriodStart>
-
-            <GlPeriodEnd>
-              {inputs.periodEnd}
-            </GlPeriodEnd>
-
-            <span style={{width:'60px'}}>&nbsp;</span>
-            <GlPeriodOpen>
-              {inputs.periodOpen}
-            </GlPeriodOpen>
-        </GlPeriodRow>
-      )
-  };
-}
-const formTemplate = (self) => {
-  return (locals) => {
-      let inputs = locals.inputs;
-      return (
-        <Container>
-          <H2>{"GL Periods"}</H2>
-          <GlPeriodPane>
-            <GlPeriodRow>
-              <GlPeriodNo>{"Period#"}</GlPeriodNo>
-              <GlPeriodStartLabel>{"Start Date"}</GlPeriodStartLabel>
-              <GlPeriodEndLabel>{"End Date"}</GlPeriodEndLabel>
-              <GlPeriodOpenText>&nbsp;{"Open?"}</GlPeriodOpenText>
-              <LastColumn />
-            </GlPeriodRow>
-              {inputs.glPeriodList}
-          </GlPeriodPane>
-        </Container>
-      );
-  }
-}
-
 export default class GlPeriodTab extends React.Component {
   constructor(props) {
       super(props);
-      // this.state = {value: {glPeriodList: []} ,
-      //   filter: {company: '', year: formatDate(new Date(), 'YYYY') } };
       this.onFormChange = this.onFormChange.bind(this)
       this.onFilterChange = _.debounce(this.onFilterChange.bind(this),100)
+      // this.errorList = []
+      this.state = {errorList:[]}
   }
   onFilterChange(raw,path) {
     const {company, year} = raw;
@@ -249,20 +176,69 @@ export default class GlPeriodTab extends React.Component {
 
   }
   onFormChange(raw,path){
-      console.log("onFormChange", path, "raw", raw);
+      // this.errorList = []
+      let p = path.slice(0,path.length-1)
+      let res, component = this.form.getComponent(path)
+      if (component && _.get(raw,path)) { // has component & has value
+        res = component.validate()      
+        if (res.errors && res.errors.length === 0 ) {
+          this.validateForm(raw,path)
+        } else {
+          this.setState({errorList:[]})
+        }
+      }
       this.props.actions.settingsPrdSet(raw.glPeriodList)
   }
+  validateForm(raw, path) {
+    // check that the end date is more than start date, but not on current row, check path
+    const p = path && path.length > 1 ? path.slice(0,2) : ["glPeriodList",-1]
+    let res,name, errorList = [], data = _.get(raw,[p[0]])
+    if (!data) return [] // no data, no need to validate
+    data.forEach((item,idx) => {
+        if ( idx !== p[1] ) {
+          const row = _.get(raw,[p[0],idx]) // get the row data to check
+          let sd = _.isDate(row.periodStart) ? row.periodStart : new Date(...(row.periodStart)),
+              ed = _.isDate(row.periodEnd) ? row.periodEnd : new Date(...(row.periodEnd))
+          if (ed < sd) {
+            errorList.push( `Row ${idx+1}, start date is after end date` )            
+          }
+        }
+    })
+    this.setState({errorList:errorList})
+    return errorList    
+  }
+  
   render() {
       const filter = this.props.uiData.get("filter").toJS()
       let glPeriods = this.props.glPeriods.filter(p => p.get("periodNo").substring(0,4) === filter.year && p.get("companyNo") === filter.company ) 
-      // debugger
       glPeriods = {glPeriodList: glPeriods.toJS()};
+      const {inputRef} = this.props;
       return (
-          <div style={{width:'80%'}}>
-            <Form ref="cform" type={filterFac(this)} options={filterOpts}
-            value={filter} onChange={this.onFilterChange} />
-            <Form type={modelFac(this)} options={optionsFac(this)}
+        <div style={{width:'90%'}}>
+          <Container>
+            <H2>{"GL Periods"}</H2>
+          </Container>
+            <Pane>
+                  <Form ref="cform" type={filterFac(this)} options={filterOpts}
+                    value={filter} onChange={this.onFilterChange} />
+              <Pane>
+              {this.state.errorList.length > 0 ?
+                <Alert bsStyle="warning">
+                    <strong>{this.state.errorList.map((e,idx) => <div key={idx}>{e}</div>)}</strong>  
+                </Alert> : ''}
+                
+                <Row>
+                  <Column flex={2}><Bold>{"Period#"}</Bold></Column>
+                  <Column flex={3}><Bold>{"Start Date"}</Bold></Column>
+                  <Column flex={3}>&nbsp;<Bold>{"End Date"}</Bold></Column>
+                  <Column flex={2}><Bold>{"Open?"}</Bold></Column>
+                  <Column flex={1.2}>&nbsp;</Column>
+                </Row>
+              </Pane>
+
+            <Form ref={f => {this.form=f;inputRef(f); }}  type={modelFac(this)} options={optionsFac(this)}
                   value={ glPeriods } onChange={this.onFormChange} />
+          </Pane>
           </div>
       )
   }

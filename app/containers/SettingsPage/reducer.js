@@ -15,7 +15,8 @@ const initialState = fromJS({
     error: false,
     loading: false,
     currentTab: 1,
-    filter: {}
+    filter: {},
+    filter2: {}
   }
 });
 
@@ -39,7 +40,7 @@ function settingsPageReducer(state = initialState, action) {
     case c.SETTINGS_SEG_SET:
       // if action.segments is empty use existing state, else filter out same company from state
       rows = action.segments.length === 0 ? state.get("segments").toJS() :
-            state.get("segments").filter(s => s.get("companyNo") !== state.getIn(["uiData","filter","company"]) ).toJS()
+            state.get("segments").filter(s => s.get("companyNo") !== state.getIn(["uiData","filter2","company"]) ).toJS()
       action.segments.forEach(itm => rows.push(itm))  
       return state.setIn(["segments"], fromJS(rows))
 
