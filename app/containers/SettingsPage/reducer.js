@@ -14,6 +14,7 @@ const initialState = fromJS({
   uiData : {
     error: false,
     loading: false,
+    saveMessage: '',
     currentTab: 1,
     filter: {},
     filter2: {}
@@ -58,6 +59,17 @@ function settingsPageReducer(state = initialState, action) {
               filter(p => p.get("periodNo").substring(0,4) !== row.periodNo.substring(0,4) || p.get("companyNo") !== row.companyNo).toJS()
       action.prds.forEach( itm => rows.push(itm))
       return state.setIn(["glPeriods"],fromJS(rows))
+    case c.SETTINGS_SAVE_RQST:
+      console.log("reducer save request...")
+      return state.setIn(["uiData","saveMessage"],c.SETTINGS_SAVE_RQST_MSG)
+    case c.SETTINGS_SAVE_OK:
+      console.log("reducer save ok...")
+      return state.setIn(["uiData","saveMessage"], c.SETTINGS_SAVE_OK_MSG)
+    case c.SETTINGS_SAVE_KO:
+      return state.setIn(["uiData","saveMessage"], action.errors)
+    case c.SETTINGS_SAVE_CLEAR:
+      console.log("reducer clearing...")
+      return state.setIn(["uiData","saveMessage"], '')    
     default:
       return state;
   }

@@ -1,11 +1,16 @@
 // import { take, call, put, select } from 'redux-saga/effects';
-import {SETTINGS_FETCH, SETTINGS_FETCH_OK, SETTINGS_FETCH_KO} from './constants';
+import 
+{ SETTINGS_FETCH, SETTINGS_FETCH_OK, SETTINGS_FETCH_KO,
+  SETTINGS_SAVE_RQST, SETTINGS_SAVE_OK, SETTINGS_SAVE_KO
+} from './constants';
 const actions = require( './actions' ) ;
 import {fromJS} from 'immutable'
 import { take, call, put, select, fork, takeLatest, takeEvery, all } from 'redux-saga/effects';
 import request from 'utils/request';
 
 const requestUrl = `http://localhost:8080/settgs.json`
+const saveUrl = `http://localhost:8080/save.json`
+
 
 function* fetchSettingsWorker(action) {
     try {
@@ -30,7 +35,7 @@ function* fetchSettingsWorker(action) {
 
     } catch (errs) {
       console.log("*** saga errors", errs)
-      yield put({type: SETTINGS_FETCH_KO, errs})
+      yield put({type: SETTINGS_FETCH_KO, errors: errs})
       
     }
 }
@@ -41,10 +46,28 @@ function* settingsFetchWatcher() {
   // }
   const action = yield takeLatest(SETTINGS_FETCH, fetchSettingsWorker)
 }
+function* saveSettingsWorker(action){
+  try {
+    // call to mock rest endpoint
+    const res = yield call(request, saveUrl)
+    yield put({type: SETTINGS_SAVE_OK, data: "Settings successfully saved..."})
+
+  } catch (errs) {
+    console.log("Errors in saving settings", errs)
+    yield put({type:SETTINGS_SAVE_KO}, errs)
+  }
+}
+
+function* settingsSaveWatcher() {
+  const action = yield takeLatest(SETTINGS_SAVE_RQST, saveSettingsWorker)
+}
+
+
 export default function* defaultSaga() {
   // See example in containers/HomePage/saga.js
   const [settings] = yield all([
     call(settingsFetchWatcher),
+    call(settingsSaveWatcher),
   ])
 }
 

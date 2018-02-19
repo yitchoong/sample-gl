@@ -11,14 +11,14 @@ import { Helmet } from 'react-helmet';
 import { createStructuredSelector } from 'reselect';
 import { compose, bindActionCreators } from 'redux';
 import { Switch, Route } from 'react-router-dom';
-
+import {Alert} from 'react-bootstrap'
 import styled from 'styled-components';
 import _ from 'lodash';
 import formatDate from 'date-fns/format'
 import parse from 'date-fns/parse'
 import isValid from 'date-fns/is_valid'
 
-import {Tabs, Tab, Grid, Row, Col, Button, Nav, NavItem} from 'react-bootstrap'
+import {Tabs, Tab,Button, Nav, NavItem} from 'react-bootstrap'
 
 import injectSaga from 'utils/injectSaga';
 import injectReducer from 'utils/injectReducer';
@@ -33,6 +33,9 @@ import Segment from './SegmentSettings'
 import GlPeriod from './GlPeriodSettings'
 import * as settingActions from './actions'
 import {companies, segments, currencies, glPeriods, uiData} from './selectors'
+import {SETTINGS_SAVE_OK_MSG,SETTINGS_SAVE_RQST_MSG} from './constants'
+
+const __ = (m) => m
 
 const MainContainer = styled.div`
     flex: 1;
@@ -40,6 +43,16 @@ const MainContainer = styled.div`
     margin-left: 10px;
     margin-top: 10px;
 `;
+
+
+const Row = styled.div.attrs({})`
+  display: flex;
+  flex-direction: row;
+  margin-top: ${props => props.marginTop};
+  margin-bottom: ${props => props.marginBottom};
+  margin-left: ${props => props.marginLeft};
+  margin-right: ${props => props.marginRight};
+`
 
 const TabContainer = styled.div`
     flex: 1;
@@ -68,15 +81,26 @@ export class SettingsPage extends React.PureComponent { // eslint-disable-line r
               loc.match('\/glperiod\/?') ? 4: 1
 
     this.state = {tabKey: tab}
+    this.onSave = this.onSave.bind(this)
   }
+  onSave(e) {
+    // saving, have to run validation first
+    const canSave = this.validateTab()
+    if (canSave) {
+      // trigger an action, that will call a saga
+      // gather all the data together 
+      let settings = {
+        companies: this.props.companies.get("companyList").toJS(),
+        segments: this.props.segments.toJS(),
+        currencies: this.props.currencies.get("currencyList").toJS(),
+        glPeriods: this.props.glPeriods.toJS()
+      }
+      this.props.actions.settingsSaveRequest(settings)
+      
+    }
+  }
+  validateTab(){
 
-  handleTabSelect(key) {
-    let tab = key === 1 ? 'company' :
-              key === 2 ? 'segment' :
-              key === 3 ? 'currency' :
-              key === 4 ? 'glperiod' : ''
-    const url = tab ? `/settings/${tab}/` : '/settings/'
-    // validate if tab is ok  before we change?
     const activeKey = this.refs.nav.props.activeKey
     let canChange, data, errs;
     switch (activeKey) {
@@ -105,19 +129,37 @@ export class SettingsPage extends React.PureComponent { // eslint-disable-line r
     default:
       canChange = false;
     }
+    return canChange
+  }
+  handleTabSelect(key) {
+    let tab = key === 1 ? 'company' :
+              key === 2 ? 'segment' :
+              key === 3 ? 'currency' :
+              key === 4 ? 'glperiod' : ''
+    const url = tab ? `/settings/${tab}/` : '/settings/'
+    // validate if tab is ok  before we change?
+    const activeKey = this.refs.nav.props.activeKey
+    const canChange = this.validateTab()      
     if (canChange && key !== activeKey) {
       this.props.history.push(url)
       this.setState({tabKey:key})
-    } 
-      
+    }  
   }
   componentDidMount(){
     // need to fetch the settings
     this.props.actions.settingsFetch()
   }
+  componentWillUpdate(nextProps){
+    const uiData = this.props.uiData;
+    if (uiData.get("saveMessage") === SETTINGS_SAVE_OK_MSG) {
+      this.props.actions.settingsSaveClear()
+    }
+  }
+
   render() {
     const {match, actions, companies,segments,currencies,glPeriods,uiData} = this.props;
     const extraProps = {match,actions,companies,segments,currencies,glPeriods,uiData}
+    const message = uiData.get && uiData.get("saveMessage") ? uiData.get("saveMessage") : ''
     return (
       <div>
         <Helmet>
@@ -136,9 +178,14 @@ export class SettingsPage extends React.PureComponent { // eslint-disable-line r
                     </Nav>
                 </div>
                 <div style={{flex:1, marginRight:'10px'}}>
-                      <Button bsStyle={"info"} onClick={()=>alert('Clicked')}>Save Settings</Button>
+                      <Button bsStyle={"info"} onClick={this.onSave}>Save Settings</Button>
                 </div>
             </TabContainer>
+            {message ? 
+            <Row marginTop={"10px;"} marginLeft={"20px;"} marginRight={"20px;"} >
+              <Alert style={{flex:1, margin:"0px", padding:"10px"}} bsStyle={"danger"}>{message}</Alert>
+            </Row> : null }
+
             <TabContent>
                 <Switch>
                   {/*<Route exact path={`${match.path}/`}  component={Company} /> */}
