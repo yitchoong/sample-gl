@@ -122,6 +122,7 @@ export default class SegmentTab extends React.Component {
     this.props.actions.settingsSegmentSet(segs)
   }
   onFormChange(raw,path){
+    this.props.actions.settingsMsgClear()
     let p = path.slice(0,path.length-1)
     let component = this.form.getComponent(path)
     let res;
@@ -129,9 +130,7 @@ export default class SegmentTab extends React.Component {
       res = component.validate()      
       if (res.errors && res.errors.length === 0 ) {
         this.validateForm(raw,path)
-      } else {
-        this.setState({errorList:[]})
-      }
+      } 
     }
     this.props.actions.settingsSegmentSet(raw.segmentList)    
   }
@@ -149,7 +148,8 @@ export default class SegmentTab extends React.Component {
           }
         } 
     })
-    this.setState({errorList:errorList})
+    const errmsg = errorList.length > 0 ?errorList.map((e,idx) => <div key={idx}>{e}</div>) :null
+    this.props.actions.settingsMsgSet(errmsg)
     return errorList
   }
   render() {
@@ -174,10 +174,6 @@ export default class SegmentTab extends React.Component {
               </Row>
 
               <Pane>
-                {this.state.errorList.length > 0 ?
-                <Alert bsStyle="warning">
-                    <strong>{this.state.errorList.map((e,i) => <div key={i}>{e}</div>)}</strong>  
-                </Alert> : ''}
                   <Row>
                     <Column flex={1}>{"Seg#"}</Column>
                     <Column flex={1}>&nbsp;{"Abbrev"}</Column>

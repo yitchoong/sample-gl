@@ -151,7 +151,7 @@ export class SettingsPage extends React.PureComponent { // eslint-disable-line r
   }
   componentWillUpdate(nextProps){
     const uiData = this.props.uiData;
-    if (uiData.get("saveMessage") === SETTINGS_SAVE_OK_MSG) {
+    if (uiData.get("message") === SETTINGS_SAVE_OK_MSG) {
       this.props.actions.settingsSaveClear()
     }
   }
@@ -159,7 +159,7 @@ export class SettingsPage extends React.PureComponent { // eslint-disable-line r
   render() {
     const {match, actions, companies,segments,currencies,glPeriods,uiData} = this.props;
     const extraProps = {match,actions,companies,segments,currencies,glPeriods,uiData}
-    const message = uiData.get && uiData.get("saveMessage") ? uiData.get("saveMessage") : ''
+    const message = uiData.get && uiData.get("message") ? uiData.get("message") : ''
     return (
       <div>
         <Helmet>

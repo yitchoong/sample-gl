@@ -28,3 +28,6 @@ export const SETTINGS_SAVE_CLEAR = "GL/SETTINGS/SAVE/KO"
 export const SETTINGS_SAVE_OK_MSG = "Settings successfully saved."
 export const SETTINGS_SAVE_RQST_MSG = "Saving settings, please wait..."
 
+export const SETTINGS_MSG_SET = "GL/SETTINGS/MSG/SET"
+export const SETTINGS_MSG_CLEAR = "GL/SETTINGS/MSG/CLEAR"
+

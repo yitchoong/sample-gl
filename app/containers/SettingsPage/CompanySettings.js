@@ -52,9 +52,9 @@ const optionsFac = (self) => {
           auto: 'placeholders',
           i18n: {required:'', optional:''},
           fields: {
-              companyNo: {factory: w.Textbox, hasLabel:true, error:'Must be < 4 chars'},
-              abbreviation: {factory: w.Textbox, hasLabel:true},
-              companyName: {factory: w.Textbox, hasLabel:true, error: 'Name is required'}
+              companyNo: {factory: w.Textbox, error:'Must be < 4 chars'},
+              abbreviation: {factory: w.Textbox},
+              companyName: {factory: w.Textbox, error: 'Name is required'}
           }
       }
   }
@@ -77,37 +77,20 @@ export default class CompanyTab extends React.Component {
       super(props);
       // this.state = {value: {companyList: [] } };
       this.onFormChange = this.onFormChange.bind(this)
-      this.formError = ''
+      // this.formError = ''
   }
   onFormChange(raw,path){
-      this.formError = ''
-      // let p = path.slice(0,path.length-1)
-      let res, form = this.form.getComponent(path)
-      form && form.removeErrors()
-      if (form && _.get(raw,path)) res = form.validate()
+      this.props.actions.settingsMsgClear()
+      // this.formError = ''      
+      let p = path.slice(0,path.length-1)
+      let res, form = this.form.getComponent(p), comp = this.form.getComponent(path) 
+      if (form) form.removeErrors() 
+      if (comp && _.get(raw,path)) res = comp.validate()      
       this.props.actions.settingsCompSet(raw)
   }
   validateForm(raw, path) {
     // call validateForm for cross field validations, in this case, not required
     return []
-
-    const p = path && path.length > 1 ? path.slice(0,2) : ["companyList",-1]
-    let res,name, errorList = [], data = _.get(raw,[p[0]])
-    if (!data) return [] // no data, no need to validate
-    data.forEach((item,idx) => {
-        if ( idx !== p[1] ) {
-          const row = _.get(raw,[p[0],idx]) // get the row data to check
-          res = row.validate()
-          if (res.errors && res.errors.length > 0 ) {
-            errorList.push( `Row ${idx+1}, has errors` )
-          }
-        }
-    })
-    return errorList
-    
-  }
-  getErrorMsg(){
-    return '' //placeholder now, can be use for errors later on
   }
 
   render() {
@@ -119,9 +102,6 @@ export default class CompanyTab extends React.Component {
           <Container>
               <H2>{"Company Settings"}</H2>
               <Pane>
-
-                <ErrorMsg>{this.getErrorMsg()}</ErrorMsg>
-
                 <Row>
                   <Column flex={2}>{"Company No"}</Column>
                   <Column flex={2}>{"Abbreviation"}</Column>

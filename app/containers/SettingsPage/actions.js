@@ -21,6 +21,8 @@ import {
   SETTINGS_SAVE_OK,
   SETTINGS_SAVE_KO,
   SETTINGS_SAVE_CLEAR,
+  SETTINGS_MSG_SET,
+  SETTINGS_MSG_CLEAR
 } from './constants';
 
 export const settingsInit = () => ({ type: SETTINGS_INIT})
@@ -44,3 +46,6 @@ export const settingsSaveRequest = (settings) => ({type:SETTINGS_SAVE_RQST, sett
 export const settingsSaveOk = (data) => ({type:SETTINGS_SAVE_OK, data})
 export const settingsSaveKo = (errors) => ({type:SETTINGS_SAVE_OK, errors})
 export const settingsSaveClear = () => ({type:SETTINGS_SAVE_CLEAR})
+
+export const settingsMsgSet = (msg) => ({type:SETTINGS_MSG_SET, msg })
+export const settingsMsgClear = () => ({type:SETTINGS_MSG_CLEAR})

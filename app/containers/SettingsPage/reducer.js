@@ -14,7 +14,7 @@ const initialState = fromJS({
   uiData : {
     error: false,
     loading: false,
-    saveMessage: '',
+    message: '',
     currentTab: 1,
     filter: {},
     filter2: {}
@@ -45,11 +45,6 @@ function settingsPageReducer(state = initialState, action) {
       action.segments.forEach(itm => rows.push(itm))  
       return state.setIn(["segments"], fromJS(rows))
 
-    // case c.SETTINGS_SEG_ADD:
-    //   return state.setIn(["segments",state.get("segments").size], action.segment)
-    // case c.SETTINGS_SEG_DEL:
-    //   index = state.get("segments").findIndex(x=>x.get("segmentNo") === action.segment.segmentNo)
-    //   return index >= 0 ? state.deleteIn(["segments",index]) : state
     case c.SETTINGS_CCY_SET:
       return state.setIn(["currencies"], fromJS(action.ccy))
     case c.SETTINGS_PRD_SET:
@@ -61,15 +56,19 @@ function settingsPageReducer(state = initialState, action) {
       return state.setIn(["glPeriods"],fromJS(rows))
     case c.SETTINGS_SAVE_RQST:
       console.log("reducer save request...")
-      return state.setIn(["uiData","saveMessage"],c.SETTINGS_SAVE_RQST_MSG)
+      return state.setIn(["uiData","message"],c.SETTINGS_SAVE_RQST_MSG)
     case c.SETTINGS_SAVE_OK:
       console.log("reducer save ok...")
-      return state.setIn(["uiData","saveMessage"], c.SETTINGS_SAVE_OK_MSG)
+      return state.setIn(["uiData","message"], c.SETTINGS_SAVE_OK_MSG)
     case c.SETTINGS_SAVE_KO:
-      return state.setIn(["uiData","saveMessage"], action.errors)
+      return state.setIn(["uiData","message"], action.errors)
     case c.SETTINGS_SAVE_CLEAR:
       console.log("reducer clearing...")
-      return state.setIn(["uiData","saveMessage"], '')    
+      return state.setIn(["uiData","message"], '')    
+    case c.SETTINGS_MSG_SET:
+      return state.setIn(["uiData","message"], action.msg)
+    case c.SETTINGS_MSG_CLEAR:
+      return state.setIn(["uiData","message"], '')    
     default:
       return state;
   }

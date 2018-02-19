@@ -17,7 +17,6 @@ import * as w from 'components/Widgets'
 
 const __ = (code) => code
 
-
 const Container = styled.div`
   margin: 5px;
 `;
@@ -49,7 +48,6 @@ const Col = styled.span.attrs({
 const ErrorMsg = styled.div`
   color: red;
 `
-
 
 const Form = t.form.Form
 const Positive = t.refinement(t.Number, (n) => n >= 0 && year > 2000 );
@@ -111,12 +109,14 @@ const optionsFac = (self) => {
           // template: glPeriodTemplate(self),
           template: w.ListTemplate(self,4,[2,3,3,2]),
           order: ["periodNo","periodStart","periodEnd","periodOpen"],
+          auto: 'placeholders',
+          i18n: {required:'', optional:''},          
           fields: {
-              periodNo: {factory: w.Textbox, hasLabel:false, disabled:true, attrs:{style:{width:'60%'}} },
+              periodNo: {factory: w.Textbox, disabled:true, attrs:{style:{width:'60%'}} },
               periodOpen: {factory: w.CheckBox, hasLabel:false},
-              periodStart: {factory: w.Datetime, hasLabel:false, order: ['D','M','YY']},
-              periodEnd: {factory: w.Datetime, hasLabel:false, order: ['D','M','YY']},
-              companyNo: {factory: w.Textbox, type:'hidden', hasLabel:false },
+              periodStart: {factory: w.Datetime,order: ['D','M','YY']},
+              periodEnd: {factory: w.Datetime,order: ['D','M','YY']},
+              companyNo: {factory: w.Textbox, type:'hidden' },
           }
       }
   }
@@ -141,7 +141,7 @@ export default class GlPeriodTab extends React.Component {
       this.onFormChange = this.onFormChange.bind(this)
       this.onFilterChange = _.debounce(this.onFilterChange.bind(this),100)
       // this.errorList = []
-      this.state = {errorList:[]}
+      // this.state = {errorList:[]}
   }
   onFilterChange(raw,path) {
     const {company, year} = raw;
@@ -176,18 +176,19 @@ export default class GlPeriodTab extends React.Component {
 
   }
   onFormChange(raw,path){
-      // this.errorList = []
+      this.props.actions.settingsMsgClear()
       let p = path.slice(0,path.length-1)
-      let res, component = this.form.getComponent(path)
+      let res, component = this.form.getComponent(path),
+          form = this.form.getComponent(p)
+
+      if (form) form.removeErrors() 
       if (component && _.get(raw,path)) { // has component & has value
-        res = component.validate()      
-        if (res.errors && res.errors.length === 0 ) {
-          this.validateForm(raw,path)
-        } else {
-          this.setState({errorList:[]})
-        }
-      }
-      this.props.actions.settingsPrdSet(raw.glPeriodList)
+          res = component.validate()      
+      if (res.errors && res.errors.length === 0 ) {
+        this.validateForm(raw,path)
+      } 
+    }
+    this.props.actions.settingsPrdSet(raw.glPeriodList)
   }
   validateForm(raw, path) {
     // check that the end date is more than start date, but not on current row, check path
@@ -204,7 +205,8 @@ export default class GlPeriodTab extends React.Component {
           }
         }
     })
-    this.setState({errorList:errorList})
+    const errmsg = errorList.length > 0 ? errorList.map((e,idx) => <div key={idx}>{e}</div>) :null
+    this.props.actions.settingsMsgSet(errmsg)
     return errorList    
   }
   
@@ -222,11 +224,6 @@ export default class GlPeriodTab extends React.Component {
                   <Form ref="cform" type={filterFac(this)} options={filterOpts}
                     value={filter} onChange={this.onFilterChange} />
               <Pane>
-              {this.state.errorList.length > 0 ?
-                <Alert bsStyle="warning">
-                    <strong>{this.state.errorList.map((e,idx) => <div key={idx}>{e}</div>)}</strong>  
-                </Alert> : ''}
-                
                 <Row>
                   <Column flex={2}><Bold>{"Period#"}</Bold></Column>
                   <Column flex={3}><Bold>{"Start Date"}</Bold></Column>

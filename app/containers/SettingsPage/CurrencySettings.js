@@ -8,7 +8,6 @@ import * as w from 'components/Widgets'
 
 const __ = (code) => code
 
-
 const Container = styled.div`
   margin: 2px;
 `;
@@ -32,7 +31,6 @@ const ErrorMsg = styled.div`
 `
 
 const Form = t.form.Form
-
 const modelFac = (self) => {
   const Currency = t.struct({
       currencyCode: t.String,
@@ -43,14 +41,15 @@ const modelFac = (self) => {
   });
 }
 const optionsFac = (self) => {
-
   const currencyOptions = () => {
       return {
           // template: currencyTemplate(self),
           template: w.ListTemplate(self,2,[2,7]),
+          auto: 'placeholders',
+          i18n: {required:'', optional:''},
           fields: {
-              currencyCode: {factory: w.Textbox, hasLabel:false, error: __("Required field"), attrs:{style:{width:'80%'}}},
-              currencyName: {factory: w.Textbox, hasLabel:false, error: __("Required field")}
+              currencyCode: {factory: w.Textbox, error: __("Required field"), attrs:{style:{width:'90%'}}},
+              currencyName: {factory: w.Textbox, error: __("Required field")}
           }
       }
   }
@@ -66,19 +65,18 @@ const optionsFac = (self) => {
       }
   }
 }
-
 export default class CurrencyTab extends React.Component {
   constructor(props) {
       super(props);
-      // this.state = {value: {currencyList: [] } };
       this.onFormChange = this.onFormChange.bind(this)
   }
   onFormChange(raw,path) {
-      // this.setState({value:raw});
-      this.props.actions.settingsCcySet(raw)
-  }
-  getErrorMsg(){
-    return ''
+    this.props.actions.settingsMsgClear()
+    let p = path.slice(0,path.length-1)
+    let res, form = this.form.getComponent(p), comp = this.form.getComponent(path) 
+    if (form) form.removeErrors() 
+    if (comp && _.get(raw,path)) res = comp.validate()      
+    this.props.actions.settingsCcySet(raw)
   }
   render() {
       const {currencies,inputRef} = this.props;
@@ -88,7 +86,6 @@ export default class CurrencyTab extends React.Component {
           <Container>
               <H2>{"Currency Settings"}</H2>
               <Pane>
-                <ErrorMsg>{this.getErrorMsg()}</ErrorMsg>              
                 <Row>
                   <Column flex={2}>{__("Currency Code")}</Column>
                   <Column flex={7}>{__("Currency Name")}</Column>
